@@ -1,0 +1,132 @@
+  body {
+    font-family: "Roboto", "Helvetica", "Arial", "sans-serif";
+    background-color: lightgrey;
+    margin: 0;
+  }
+    
+  header, button {
+    background-color: #31ADE3;
+    color:            white;
+    padding:          5px;
+    }
+
+  table {
+    margin: 0;
+    padding: 0;
+  }
+  
+  th {
+    margin: 0;
+    padding: 5px;
+    position: sticky;
+    top: 0;
+    background: white;
+    border-bottom: thin solid grey;
+  }
+    
+  h3 {
+    margin: 0;
+  }
+    
+  .title {
+    margin: 0;
+    padding-top: 0.7em;
+  }
+    
+  header {
+    p/osition: sticky;
+    height: 0.5in;
+    vertical-align: middle;
+    top: 0;
+  }
+    
+  button {
+    border-radius: 5px;
+    border: thin solid lightgrey;
+    margin: 3px;
+  }
+
+  .dragable {
+    display:          none;
+    position:         absolute;
+    top:              30%;
+    left:             25%;
+    z-index:          1000;
+    height:           40%;
+    width:            8in;
+    border:           thin solid grey;
+    border-radius:    5px;
+    background-color: white;
+    color:            black;
+    margin:           0;
+    padding:          10px;
+    overflow:         auto;
+    resize:           both;
+  }
+  
+  .hdr {
+    border-bottom: thin solid grey;
+  }
+  
+  .textBox {
+    border-radius: 5px;
+    border: thin solid lightgrey;
+    height: 4em;
+    width: 100%;
+  }
+
+  .bufferTitle {
+    border: thin solid lightgrey;
+    border-radius: 5px;
+  }
+
+  .buffer {
+    display: none;
+    z-index: 1000;
+  }
+
+  #repeatingContext {
+    height: 2em;
+  }
+    
+  #chatError {
+    color: red;
+  }  
+
+  #mainPage {
+    padding: 1em;
+  }
+
+  #config {
+    border: thin solid darkgrey;
+    background-color: #eee;
+  }
+    
+  #config-title {
+    font-size: 1.5em;
+    border: none;
+  }
+
+  #help {
+    top: 2in;
+    left: 2in;
+    width: 7in;
+    height: 5in;
+    padding: 0;
+    margin: 0;
+    border: thin solid grey;
+    background-color: white;
+    position: absolute;
+    overflow: auto;
+    z-index: 5;
+    display: none;
+    resize: both;
+  }
+
+  .disabled-button {
+    pointer-events:  none;
+    opacity:         0.4;
+    cursor:          not-allowed;
+    pointer-events:  none;
+  }
+  
