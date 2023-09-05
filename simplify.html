@@ -6,7 +6,8 @@
     <script src="./jquery-3.5.1.min.js" > </script>
     <script src="./font.js"             > </script>
     <script src="./drag.js"             > </script>
-    <script src="./indexedDbV2.js"      > </script>
+    <script src="./log.js"              > </script>
+    <!-- script src="./indexedDbV2.js"      > </script -->
     <script src="./simplify.js"         > </script>
     <title> Simplify </title>
   </head>
@@ -16,7 +17,9 @@
         <tbody>
           <tr>
             <td> <h3 class="title" > Simplify </h3></td>
-            <td style="text-align: right;" > <i class='fas fa-question' onclick="toggle( '#help' )" ></i> </td>
+            <td style="text-align: right;" > 
+              <i class='fas fa-list'     onclick="toggle( '#log'  )" > </i> 
+              <i class='fas fa-question' onclick="toggle( '#help' )" > </i> </td>
           </tr>
         </tbody>
       </table>
@@ -140,6 +143,34 @@
       </div>
 
     </div>
+
+    <div id="log" class="logPage dragable" >
+      <table width="100%">
+        <thead>
+          <tr class="hdr" >
+            <th> <h3 id="logheader" class="title" > Simplify Log </h3> </th>
+            <th style="text-align: right;" > 
+              <i class='fas fa-window-close' onclick="toggle( '#log' )"       ></i> 
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+      </table>
+      
+      <div class='logBody'>
+        <table>
+          <thead sticky >
+            <tr>
+              <th class='stk' width=175 >Time Stamp</th>
+              <th class='stk'>Message</th>
+              <th class='stk'>Status</th>
+            </tr>
+          </thead>
+          <tbody id='eventLogBody'>
+          </tbody>
+        </table>  
+      </div>        
+    </div>        
     
     <div id="help" class="helpPage dragable" >
       <table width="100%">
