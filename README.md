@@ -1,6 +1,6 @@
 # Simplify
 Use Chatgpt to simplify training content for less capable readers.
-- Since documents can be long, this app breaks them up into small chunks to process one at a time.
+- Since documents can be long, this app breaks them up into small chunks to process one at a time. A more expensive license
 - The app presents some configurable parameters to tweek chatgpt
 - There is a prompt window to instruct chatgpt what to do with your text. You can cut and paste between Previous prompts and current prompt.
 - It has a window to dump your raw text into.
@@ -8,8 +8,18 @@ Use Chatgpt to simplify training content for less capable readers.
 - Below the chunk windows is an assembly of all the chunks.
 ## Install
 - Place all files in same folder on your local device.
-- Double-click the html file to load it up into "Chrome" 
+  One way to do this is to
+    - Navigate to github.com.unfoldingWord=box3/simplify
+    - click on Code button and select download zip file this will place code in your downloads directory
+    - After downloading click file folder after download to open folder in file explorer
+    - Right click on simplify-main.zip file and click extract then take defaults
+    - Double click on simplify.html
 - This app requires an openAI API license (which is not free)
+- To get an OpenAi key
+  - Navigate to https://chat.openai.com/auth/login in your browser
+  - Sign up to create an account
+  - follow instructions to get a key
+  - Copy this somewhere private to be able to access it later
 ## Usage
 - There are a few possible strategies of use.
   - First make the max words slider as large as possible. If the simplification fails then make the chunks smaller. Larger chunks may not complete. Larger chunks will retain more context of your whole document.
