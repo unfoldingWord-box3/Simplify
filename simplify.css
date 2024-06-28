@@ -3,7 +3,7 @@
     background-color: lightgrey;
     margin: 0;
   }
-    
+
   header, button {
     background-color: #31ADE3;
     color:            white;
@@ -14,7 +14,7 @@
     margin: 0;
     padding: 0;
   }
-  
+
   th {
     margin: 0;
     padding: 5px;
@@ -23,23 +23,46 @@
     background: white;
     border-bottom: thin solid grey;
   }
-    
+
   h3 {
     margin: 0;
   }
-    
+
+  .blk {
+    position: relative;
+    float: left;
+    padding-right: 10px;
+  }
+
+  .clear {
+    clear: left;
+  }
+
   .title {
     margin: 0;
     padding-top: 0.7em;
   }
-    
+
+  .rest {
+    width: calc( 100vw - thisChunk.width );
+  }
+
+  .sidebyside {
+    width: 49%;
+    float: left;
+  }
+
+  .wide, .buffer {
+    width: 99%;
+  }
+
   header {
     p/osition: sticky;
     height: 0.5in;
     vertical-align: middle;
     top: 0;
   }
-    
+
   button {
     border-radius: 5px;
     border: thin solid lightgrey;
@@ -63,11 +86,11 @@
     overflow:         auto;
     resize:           both;
   }
-  
+
   .hdr {
     border-bottom: thin solid grey;
   }
-  
+
   .textBox {
     border-radius: 5px;
     border: thin solid lightgrey;
@@ -78,9 +101,15 @@
   .bufferTitle {
     border: thin solid lightgrey;
     border-radius: 5px;
+    width: 30%;
+  }
+
+  .bufferGroup {
+    width: 99%;
   }
 
   .buffer {
+    width: 100%;
     display: none;
     z-index: 1000;
   }
@@ -88,10 +117,10 @@
   #repeatingContext {
     height: 2em;
   }
-    
+
   #chatError {
     color: red;
-  }  
+  }
 
   #mainPage {
     padding: 1em;
@@ -100,8 +129,9 @@
   #config {
     border: thin solid darkgrey;
     background-color: #eee;
+    padding: 7px;
   }
-    
+
   #config-title {
     font-size: 1.5em;
     border: none;
@@ -129,4 +159,3 @@
     cursor:          not-allowed;
     pointer-events:  none;
   }
-  
