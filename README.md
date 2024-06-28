@@ -1,6 +1,6 @@
 # Simplify
 Use Chatgpt to simplify training content for less capable readers.
-- Since documents can be long, this app breaks them up into small chunks to process one at a time. A more expensive license
+- Since documents can be long, this app breaks them up into small chunks to process one at a time. 
 - The app presents some configurable parameters to tweek chatgpt
 - There is a prompt window to instruct chatgpt what to do with your text. You can cut and paste between Previous prompts and current prompt.
 - It has a window to dump your raw text into.
