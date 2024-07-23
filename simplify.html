@@ -1,8 +1,8 @@
 <!DOCTYPE html>
-<html>
+<html> 
   <head>
     <meta charset='utf-8' >
-    <link rel="stylesheet" href="./simplify.css" />
+    <link rel="stylesheet" href="./simplify.css" />  
     <script src="./jquery-3.5.1.min.js" > </script>
     <script src="./font.js"             > </script>
     <script src="./drag.js"             > </script>
@@ -17,156 +17,195 @@
         <tbody>
           <tr>
             <td> <h3 class="title" > Simplify </h3></td>
-            <td style="text-align: right;" >
-              <i class='fas fa-list'     onclick="toggle( '#log'  )" > </i>
-              <i class='fas fa-question' onclick="toggle( '#help' )" > </i>
+            <td style="text-align: right;" > 
+              <i class='fas fa-list' onclick="toggle( '#log'      )" > </i> 
+              <i class='fas fa-cog'  onclick="toggle( '#settings' )" > </i> 
+              <i class='fas fa-info' onclick="toggle( '#help'     )" > </i> 
             </td>
           </tr>
         </tbody>
       </table>
     </header>
+    
+    <div id="config" > 
+      <span id="config-title"> Configuration </span> <input name='configed' type='checkbox' onclick='toggle("#conf")' checked > <br>
+      <div id='conf'>
+        1. <button onclick="setKey()">    Set API Key </button> 
+        Set up an OpenAI account then enter key here. <br>
 
-    <div id="config" >
-      <span id="config-title"> Configuration </span> <br>
-      <button onclick="setKey()">    Set API Key </button>
-      Set up an OpenAI account then enter key <br>
-<!--
-    then Pick Model
-    <select id="model" onchange="saveContext( 'model', this.value" >
-     <option value="01" > gpt-4 </option>
-     <option value="02" > gpt-4-0613 </option>
-     <option value="03" > gpt-4-32k </option>
-     <option value="04"          > gpt-4-32k-0613 </option>
-     <option value="05" selected > gpt-3.5-turbo </option>
-     <option value="06" > gpt-3.5-turbo-0613 </option>
-     <option value="07" > gpt-3.5-turbo-16k </option>
-     <option value="08" > gpt-3.5-turbo-16k-0613  </option>
-     <option value="09" > text-davinci-003 </option>
-     <option value="10" > text-davinci-002 </option>
-     <option value="11" > text-davinci-001 </option>
-     <option value="12" > text-curie-001 </option>
-     <option value="13" > text-babbage-001 </option>
-     <option value="14" > text-ada-001 </option>
-     <option value="15" > davinci </option>
-     <option value="16" > curie </option>
-     <option value="17" > babbage </option>
-     <option value="18" > ada </option>
-    </select>
+        2. Next pick a Model
+        <select id="model" onchange="saveContext( 'model', this.value )" >
+        </select> <br>
+        3. Periodically, examine cost of model against current "Source Text":<br> 
+        <table>
+          <tr> <td>       </td>  <td>Tokens            </td>  <td>Cost($)          </td> </tr>
+          <tr> <td> Input </td>  <td id='inputTokens'> </td>  <td id='inputCost'> </td> </tr>
+          <tr> <td> Output</td>  <td id='outputTokens'></td>  <td id='outputCost'></td> </tr>
+          <tr> <td> Total </td>  <td>                  </td>  <td id='totalCost'> </td> </tr>
+        </table> 
+<!--        &nbsp; &nbsp; <span> Input of: </span> <span id='inputTokens'   > </span> <span> tokens.  Cost: $</span> <span id='inputCost'  >0.0</span> <br>
+        &nbsp; &nbsp; <span> Output of: </span> <span id='outputTokens' > </span> <span> tokens.  Cost: $</span> <span id='outputCost' >0.0</span> <br>
+        &nbsp; &nbsp; <span> Total Cost: </span> <span id='totalCost' > </span><br>
+ -->
+        4. <span>Set Temperature</span> 
+        <input id="temperature" type="number" value="0.2" min="0" max="1" > <span> to between 0 and 2.</span> <br>
 
-    ENDPOINT    MODEL NAME
-/v1/chat/completions    gpt-4, gpt-4-0613, gpt-4-32k, gpt-4-32k-0613, gpt-3.5-turbo, gpt-3.5-turbo-0613, gpt-3.5-turbo-16k, gpt-3.5-turbo-16k-0613
-/v1/completions (Legacy)        text-davinci-003, text-davinci-002, text-davinci-001, text-curie-001, text-babbage-001, text-ada-001, davinci, curie, babbage, ada
-    -->
+        5. Set chunk size <input type="range" id="chunkSize" min="250" max="10000" step="250" value="500"
+               onchange="saveContext( 'chunkSize', this.value )" > <span id="chunkSizeValue" > 500 </span> Chunk Size <br> 
+       
+        6. Pick <select id="chunkSeparator" onchange="saveContext( 'chunkSeparator', this.value )" >
+          <option value="\n"            > New line    </option>
+          <option value="\n\r" selected > 2 New lines </option>
+          <option value=" "             > Space       </option>
+          <option value=". "            > Period      </option>
+          <option value="# "            > # (markdown)</option> 
+          <option value="## "           > ##          </option> 
+          <option value="### "          > ###         </option>   
+          <option value="--- "          > Page        </option>        
+        </select> Chunk Separator <br>
 
-      <input type="range" id="chunkSize" min="250" max="10000" step="250" value="500"
-       onchange="saveContext( 'chunkSize', this.value )" > <span id="chunkSizeValue" > 500 </span> Chunk Size <br>
-
-      <select id="chunkSeparator" onchange="saveContext( 'chunkSeparator', this.value )" >
-        <option value="\n"            > New line    </option>
-        <option value="\n\n" selected > 2 New lines </option>
-        <option value=" "             > Space       </option>
-        <option value=". "            > Period      </option>
-        <option value="# "            > #           </option>
-        <option value="## "           > ##          </option>
-        <option value="### "          > ###         </option>
-        <option value="--- "          > Page        </option>
-      </select> Chunk Separator <br>
-
-      <input type="checkbox" id="isMarkChunk" onchange="saveContext('isMarkChunk', this.value )" > Mark Output Chunks <br>
+        7. Enable <input type="checkbox" id="isMarkChunk" onchange="saveContext('isMarkChunk', this.value )" > Mark Output Chunks <br>
+        8. If all else fails: <button onclick='removeLocalStorage()' >Reset App</button>
+        <!-- span> Cost: </span --> 
+      </div>
     </div>
-
+    
     <div id="mainPage" >
       <h3> Previous Prompts </h3>
       <textarea id="previousPrompts"  class="textBox resizable" onchange="saveContext( 'previousPrompts',  this.value )" > </textarea>
       <h3> Enter Repeating context </h3>
       <textarea id="repeatingContext" class="textBox resizable" onchange="saveContext( 'repeatingContext', this.value )" ></textarea> <br>
       <span id=context></span> <br>
-
+      
       <h3> Enter Source Text </h3>
       <textarea id="sourceText"       class="textBox resizable" onchange="saveContext( 'sourceText', this.value )"  style="background-color: wheat;" >
       </textarea> <br>
-
-      <span class="toaster" id="chatError"> </span> <br>
-
+          
+      <span id="toaster" ></span> <span id="chatError"> </span> <br>
+       
       <label for="chunkProgress">    Chunks Complete</label> &nbsp;
       <progress id="chunkProgress" value="0" max="100"> 0% </progress>
-
+      
       <div class="blk">
-        <button onclick="play()"     id="play"    title="Play continuously"   > <i class='fas fa-play'         > </i> </button> &nbsp;
-        <button onclick="pause()"    id="pause"   title="Pause"               > <i class='fas fa-pause'        > </i> </button> &nbsp;
-        <button onclick="next()"     id="next"    title="Next or single step" > <i class='fas fa-step-forward' > </i> </button> &nbsp;
-        <button onclick="redo()"     id="redo"    title="Redo previous block" > <i class='fas fa-redo'         > </i> </button> &nbsp;
+        <button onclick="play()"     id="play"    title="Play continuously"   > <i class='fas fa-play'         > </i> </button> &nbsp; 
+        <button onclick="pause()"    id="pause"   title="Pause"               > <i class='fas fa-pause'        > </i> </button> &nbsp; 
+        <button onclick="next()"     id="next"    title="Next or single step" > <i class='fas fa-step-forward' > </i> </button> &nbsp; 
+        <button onclick="redo()"     id="redo"    title="Redo previous block" > <i class='fas fa-redo'         > </i> </button> &nbsp; 
         <button onclick="cancel()"   id="cancel"  title="Cancel this pass"    > <i class='fas fa-eject'        > </i> </button>
       </div> <br> <br>
-      <!-- table width="100%">
-        <tr> <td -->
-      <div class="blk sidebyside">
-        <h3> Current Chunk <span id="chunkNumber" ></span></h3>
-        <textarea id="thisChunk" class="textBox resizable" ></textarea> <br>
+      <div class='flxrow'>
+        <div class="col blk sidebyside">
+          <h3> Current Chunk <span id="chunkNumber" ></span></h3>   
+          <textarea id="thisChunk" class="textBox resizable" 
+                    onchange="saveContext( 'thisChunk', this.value )" 
+                    onmouseup="$( '#simpleChunk' ).height( $( '#thisChunk' ).height() );"></textarea> <br>
+        </div> 
+        <div class="col blk sidebyside"> 
+          <h3> Simplified Chunk <span id="simplifiedNumber" ></span> </h3>   
+          <textarea id="simpleChunk" class="textBox resizable" 
+                    onchange="saveContext( 'simpleChunk', this.value )"
+                    onmouseup="$( '#thisChunk' ).height( $( '#simpleChunk' ).height() )"></textarea> <br>
+        </div>       
       </div>
-      <div class="blk sidebyside rest">
-        <!-- /td><td -->
-        <h3> Simplified Chunk <span id="simplifiedNumber" ></span> </h3>
-        <textarea id="simpleChunk" class="textBox resizable" ></textarea> <br>
-      </div>
-      <!-- /td></tr>
-      </table -->
-      <div class="blk wide clear">
+      <div class="blk wide clear"> 
         <h3> Combined Simplified Text </h3>
-        <textarea id="target" class="textBox resizable" style="border: thin solid lightgrey;" ></textarea><br />
+        <textarea id="target" class="textBox resizable" style="border: thin solid lightgrey;" onchange="saveContext( 'target', this.value )" ></textarea><br />
       </div> <br>
-
+      
       <div class="blk bufferGroup clear">
         <h3> Buffers </h3>
         <!-- button id="newBuffers" onclick="newBuffer()" > <i class="fas fa-plus" ></i> </button -->
 
+        <div class="buffer" id="b0">
+          <input    type="text" class="bufferTitle"            id="bufferTitle0" value="" onchange="saveContext( 'bufferTitle0', this.value )">  
+          <input    type="checkbox" class="bufferToggle"       id="bufferToggle0"         onclick="bufferToggle( '0', this )" >
+          <!-- i class='fa fa-window-close' onclick='toggle( "#b6" );' > </i --> 
+          <textarea             class="textBox resizable"      id="buffer0"               onchange="saveContext( 'buffer0',      this.value )"></textarea><br />
+        </div>
+
         <div class="buffer" id="b1">
-          <input    type="text" class="bufferTitle"        id="bufferTitle1" value="" onchange="saveContext( 'bufferTitle1', this.value  )">
-          <!-- i class='fa fa-window-close' onclick='hide( "#b1" );' > </i -->
-          <textarea             class="textBox resizable"  id="buffer1"               onchange="saveContext( 'buffer1',      this.value )" ></textarea>
+          <input    type="text"     class="bufferTitle"        id="bufferTitle1" value="" onchange="saveContext( 'bufferTitle1', this.value  )"> 
+          <input    type="checkbox" class="bufferToggle"       id="bufferToggle1"         onclick="bufferToggle( '1', this )" >
+          <!-- i class='fa fa-window-close' onclick='hide( "#b1" );' > </i --> 
+          <textarea                 class="textBox resizable"  id="buffer1"               onchange="saveContext( 'buffer1',      this.value )" ></textarea>
         </div>
+        
         <div class="buffer" id="b2">
-          <input    type="text" class="bufferTitle"        id="bufferTitle2" value="" onchange="saveContext( 'bufferTitle2', this.value )">
-          <!-- i class='fa fa-window-close' onclick='toggle( "#b2" );' > </i -->
-          <textarea             class="textBox resizable"  id="buffer2"               onchange="saveContext( 'buffer2',      this.value )"></textarea><br />
+          <input    type="text"     class="bufferTitle"        id="bufferTitle2" value="" onchange="saveContext( 'bufferTitle2', this.value )">  
+          <input    type="checkbox" class="bufferToggle"       id="bufferToggle2"         onclick="bufferToggle( '2', this )" >
+          <!-- i class='fa fa-window-close' onclick='toggle( "#b2" );' > </i --> 
+          <textarea                 class="textBox resizable"  id="buffer2"               onchange="saveContext( 'buffer2',      this.value )"></textarea><br />
         </div>
+
         <div class="buffer" id="b3">
-          <input    type="text" class="bufferTitle"        id="bufferTitle3" value="" onchange="saveContext( 'bufferTitle3', this.value )">
-          <!-- i class='fa fa-window-close' onclick='toggle( "#b3" );' > </i -->
-          <textarea             class="textBox resizable"  id="buffer3"               onchange="saveContext( 'buffer3',      this.value )"></textarea><br />
+          <input    type="text"     class="bufferTitle"        id="bufferTitle3" value="" onchange="saveContext( 'bufferTitle3', this.value )"> 
+          <input    type="checkbox" class="bufferToggle"       id="bufferToggle3"         onclick="bufferToggle( '3', this )" > 
+          <!-- i class='fa fa-window-close' onclick='toggle( "#b3" );' > </i --> 
+          <textarea                 class="textBox resizable"  id="buffer3"               onchange="saveContext( 'buffer3',      this.value )"></textarea><br />
         </div>
+
         <div class="buffer" id="b4">
-          <input    type="text" class="bufferTitle"        id="bufferTitle4" value="" onchange="saveContext( 'bufferTitle4', this.value  )">
-          <!-- i class='fa fa-window-close' onclick='toggle( "#b4" );' > </i -->
-          <textarea             class="textBox resizable"  id="buffer4"               onchange="saveContext( 'buffer4',      this.value )" ></textarea>
+          <input    type="text" class="bufferTitle"            id="bufferTitle4" value="" onchange="saveContext( 'bufferTitle4', this.value  )"> 
+          <input    type="checkbox" class="bufferToggle"       id="bufferToggle4"         onclick="bufferToggle( '4', this )" >
+          <!-- i class='fa fa-window-close' onclick='toggle( "#b4" );' > </i -->  
+          <textarea             class="textBox resizable"      id="buffer4"               onchange="saveContext( 'buffer4',      this.value )" ></textarea>
         </div>
+
         <div class="buffer" id="b5">
-          <input    type="text" class="bufferTitle"        id="bufferTitle5" value="" onchange="saveContext( 'bufferTitle5', this.value )">
-          <!-- i class='fa fa-window-close' onclick='toggle( "#b5" );' > </i -->
-          <textarea             class="textBox resizable"  id="buffer5"               onchange="saveContext( 'buffer5',      this.value )"></textarea><br />
+          <input    type="text" class="bufferTitle"            id="bufferTitle5" value="" onchange="saveContext( 'bufferTitle5', this.value )">  
+          <input    type="checkbox" class="bufferToggle"       id="bufferToggle5"         onclick="bufferToggle( '5', this )" >
+          <!-- i class='fa fa-window-close' onclick='toggle( "#b5" );' > </i --> 
+          <textarea             class="textBox resizable"      id="buffer5"               onchange="saveContext( 'buffer5',      this.value )"></textarea><br />
         </div>
+
         <div class="buffer" id="b6">
-          <input    type="text" class="bufferTitle"        id="bufferTitle6" value="" onchange="saveContext( 'bufferTitle6', this.value )">
-          <!-- i class='fa fa-window-close' onclick='toggle( "#b6" );' > </i -->
-          <textarea             class="textBox resizable"  id="buffer6"               onchange="saveContext( 'buffer6',      this.value )"></textarea><br />
+          <input    type="text" class="bufferTitle"            id="bufferTitle6" value="" onchange="saveContext( 'bufferTitle6', this.value )">  
+          <input    type="checkbox" class="bufferToggle"       id="bufferToggle6"         onclick="bufferToggle( '6', this )" >
+          <!-- i class='fa fa-window-close' onclick='toggle( "#b6" );' > </i --> 
+          <textarea             class="textBox resizable"      id="buffer6"               onchange="saveContext( 'buffer6',      this.value )"></textarea><br />
         </div>
+        
+        <div class="buffer" id="b7">
+          <input    type="text" class="bufferTitle"            id="bufferTitle7" value="" onchange="saveContext( 'bufferTitle6', this.value )">  
+          <input    type="checkbox" class="bufferToggle"       id="bufferToggle7"         onclick="bufferToggle( '7', this )" >
+          <!-- i class='fa fa-window-close' onclick='toggle( "#b6" );' > </i --> 
+          <textarea             class="textBox resizable"      id="buffer7"               onchange="saveContext( 'buffer7',      this.value )"></textarea><br />
+        </div>
+        
+        <div class="buffer" id="b8">
+          <input    type="text" class="bufferTitle"            id="bufferTitle8" value="" onchange="saveContext( 'bufferTitle8', this.value )">  
+          <input    type="checkbox" class="bufferToggle"       id="bufferToggle8"         onclick="bufferToggle( '8', this )" >
+          <!-- i class='fa fa-window-close' onclick='toggle( "#b6" );' > </i --> 
+          <textarea             class="textBox resizable"      id="buffer8"               onchange="saveContext( 'buffer8',      this.value )"></textarea><br />
+        </div>
+        
+        <div class="buffer" id="b9">
+          <input    type="text" class="bufferTitle"            id="bufferTitle9" value="" onchange="saveContext( 'bufferTitle9', this.value )">  
+          <input    type="checkbox" class="bufferToggle"       id="bufferToggle9"         onclick="bufferToggle( '9', this )" >
+          <!-- i class='fa fa-window-close' onclick='toggle( "#b6" );' > </i --> 
+          <textarea             class="textBox resizable"      id="buffer9"               onchange="saveContext( 'buffer9',      this.value )"></textarea><br />
+        </div>      
+        <br>
       </div>
     </div>
-
-    <div id="log" class="logPage dragable" >
+    
+    <div id="log"      class="logPage dragable"  >
       <table width="100%">
-        <thead>
+        <tbody>
           <tr class="hdr" >
-            <th> <h3 id="logheader" class="title" > Simplify Log </h3> </th>
-            <th style="text-align: right;" >
-              <i class='fa fa-trash' onclick='clearLog();' > </i>
-              <i class='fas fa-window-close' onclick="toggle( '#log' )"       ></i>
+            <th> <h3 id="logheader" class="title" > Simplify Log  <span id='logTime'> </span> </h3> </th>
+            <th style="text-align: right;" > 
+              <span class='botm' >
+                <input type='checkbox' name='bottomFeeder' onclick='setBottom();' >
+                <i class='fa fa-fast-forward btn-icon'> </i>
+              </span>
+              <i class='fa fa-trash' onclick='clearLog();' > </i> 
+              <i class='fas fa-window-close' onclick="toggle( '#log' )"       ></i> 
             </th>
           </tr>
-        </thead>
-        <!-- tbody -->
+        </tbody>
       </table>
-
+      <!-- hr class='thick' -->
       <div class='logBody'>
         <table>
           <thead sticky >
@@ -178,134 +217,237 @@
           </thead>
           <tbody id='eventLogBody'>
           </tbody>
-        </table>
-      </div>
-    </div>
-
-    <div id="help" class="helpPage dragable" >
+        </table>  
+      </div>        
+    </div>        
+    
+    <div id="settings" class="settingsPage dragable"  >
+      <table id='settingsTable' width="100%"  >
+        <tbody>
+          <tr class="hdr" >
+            <th> <h3 id="settingsheader" class="title" > Manage Models </h3> </th>
+            <th style="text-align: right;" > 
+              <i class='fas fa-window-close' onclick="toggle( '#settings' )"       ></i> 
+            </th>
+          </tr>
+        </tbody>
+      </table>
+      <!-- hr class='thick' -->
+      <div class='settingsBody'>
+        <table>
+          <thead sticky >
+            <tr>
+              <th class='stk' > Model Name </th>
+              <th class='stk' > Target </th>
+              <th class='stk' > Input Cost </th>
+              <th class='stk' > Output Cost </th>
+            </tr>
+          </thead>
+          <tbody id='modelSettingsBody' contentEditable >
+          </tbody>
+        </table>  
+      </div>        
+    </div>        
+    
+    <div id="help"     class="helpPage dragable" >
       <table width="100%">
         <thead>
           <tr class="hdr" >
-            <th> <h3 id="helpheader" class="title" > Simplify Help </h3> </th>
-            <th style="text-align: right;" >
-              <i class='fas fa-window-close' onclick="toggle( '#help' )"       ></i>
+            <th> <h3 id="helpheader" class="title" > Simplify Information </h3> </th>
+            <th style="text-align: right;" > 
+              <i class='fas fa-window-close' onclick="toggle( '#help' )"       ></i> 
             </th>
           </tr>
         </thead>
-        <tbody>
+        <tbody>        
           <tr>
-            <td colspan=2 >
+            <td colspan=2 > 
               <p> The following are features and deficiencies of the current POC
                 <ul>
                   <li> Features
                     <ol>
-                       <li> Save previous Prompts </li>
-                       <li> Split doc into specified max word size Chunks 500 - 3000 </li>
-                       <li> Separate chunks on new lines, spaces 1-3 level heading </li>
-                       <li> Save multiple buffers of intermediate results </li>
-                       <li> Mark chunk boundaries on Output </li>
-                       <li> Process complete files </li>
-                       <li> Enable single step </li>
-                       <li> Manage buffers to retain intermediate results. </li>
+                      <li> Save previous Prompts </li>
+                      <li> Split doc into specified max word size Chunks 500 - 3000 </li>
+                      <li> Separate chunks on new lines, spaces 1-3 level heading </li>
+                      <li> Save multiple buffers of intermediate results </li>
+                      <li> Mark chunk boundaries on Output </li>
+                      <li> Process complete files </li>    
+                      <li> Enable single step </li>
+                      <li> Manage buffers to retain intermediate results. </li> 
+                      <li> Allows selection of model from plan </li>
+                      <li> Recovers after completing a document </li>   
+                      <li> Supports redo Chunk </li>
                     </ol>
                   </li>
                   <li> TBDs
-                    <ol>
-                       <li> Show diff from original (content COP) </li>
-                       <li> Recover after completing a document </li>
-                       <li> Traverse a file system for content to apply a prompt or set of prompts (Content COP)</li>
-                       <li> Use a template to reformat content (Content COP)</li>
-                       <li> Backup to previous context </li>
-                       <li> Only wait as necessary
-                       <li> Rotate through notion [doc]s folder </li>
-                       <li> Save to [doc]-simplified.md </li>
-                       <li> Support redo Chunk </li>
-                       <li> Separate on page break </li>
-                       <li> Convert to claude free version </li>
-                       <li> Make simplified size track current chunk </li>
-                       <li> Expose buffers that have content in local storage </li>
-                       <li> Refactor state machine </li>
-                       <li> Allow selection of model from plan </li>
-
-                    </ol>
+                    <ol> 
+                      <li> Show diff from original (content COP) </li>   
+                      <li> Traverse a file system for content to apply a prompt or set of prompts (Content COP)</li>   
+                      <li> Use a template to reformat content (Content COP)</li> 
+                      <li> Backup to previous context </li>
+                      <li> Only wait as necessary
+                      <li> Rotate through notion [doc]s folder </li>
+                      <li> Save to [doc]-simplified.md </li>
+                      <li> Separate on page break </li>
+                      <li> Convert to Claude free version </li>
+                      <li> Add pipeline section like DSPy </li>
+                      <li> Show all buffer sizes </li>
+                      <li> remember dragable positions and sizes </li>
+                    </ol>   
                   </li>
                 </ul>
-              </p>
+              </p>                 
               <p>To use this application:
                 <ul>
                   <li> Configure the application </li>
                     <ol>
-                      <li> Configure the application by getting an API Key. This involves setting up an OpenAI API Account.
-                           There are two types of accounts. This app uses the API to access chatgpt.</li>
+                      <li> Configure the application by getting an API Key. This involves setting up an OpenAI API Account. 
+                           There are two types of accounts. This app uses the API to access chatgpt.
                         <ol>
-                          <li> Create openAi account </li>
-                          <li> Get API key (not free)</li>
-                          <li> Click "Set API Key" in Simplify App. </li>
-                          <li> Wait for monthly statement. </li>
+                          <li> Create openAi account 
+                            <ol>
+                              <li> Navigate to `openAi.com` </li> 
+                              <li> Click Products </li> 
+                              <li> Click API Login </li> 
+                              <li> Click API </li> 
+                            </ol>
+                          </li> 
+                          <li> Get API key (not free)    
+                            <ol>
+                              <li> Navigate to `openAi.com` </li> 
+                              <li> Click Products </li> 
+                              <li> Click API Login </li> 
+                              <li> Click API </li> 
+                              <li> Click API Keys </li> 
+                              <li> Click Generate new secret key </li> 
+                              <li>  </li> 
+                            </ol> 
+                          </li> 
+                          <li> Click "Set API Key" in Simplify App. </li> 
+                          <li> Wait for monthly statement. </li> 
                         </ol>
-                      <li> Set the chunk size and chunk separator. The application will this takes the "chunk size" number of words then backs up to previous chunk separator. </li>
+                      </li>
+                      <li> Select an OpenAi model to use. 
+                           There are various models for different purposes. 
+                           The default of gpt-3.5-turbo has been tested with this app. 
+                           The list is constructed from what is available on your plan.
+
+We generally recommend that developers use either GPT-4o or GPT-3.5 Turbo, depending on the complexity of your tasks. 
+GPT-4o generally performs better on a wide range of tasks, while GPT-3.5 Turbo is fast and inexpensive for simpler tasks. 
+
+                           Models known to not be currently suitable are suppressed in the dropdown list. </li> 
+                      <li> Periodically, examine cost of input text. this changes per model and size of text to process. </li>
+                      <li> Select a temperature for responses. 
+                           The value range is 0-2. 
+                           Lower values indicating greater determinism and higher values indicating more randomness. 
+                           When the temperature is set to a lower value, the probability distribution of tokens becomes narrower and taller. 
+                           Higher values means the results may be more creative and less reproducible. </li>
+                      <li> Set the chunk size. To determine the actual chunk size the application will first take the "chunk size" number of words 
+                           then back up to previous chunk separator. </li>
+                      <li> Select a chunk separator. 
+                           If the separator does not exist in a particular chunk then the entire chunk is used. </li>
                       <li> At any time you can check the mark Output Chinks to have --- n --- separate each chunk in the output. </li>
+                      <li> When all else fails, Reset the app. Restarting the app uses cached data in browsers localstorage. 
+                           If this should get corrupt, then this will help to flush out any corrupted data (along with all the good data.)
+                           Before resetting, save any buffers or configuration settings in a scratch file so that you can easily restore them. </li>
                     </ol>
                   <li> Prepare Text </li>
                     <ol>
                       <li> Open a document to be processed.</li>
                       <li> First copy the source text into one of the bufers and call it something like "original" </li>
                       <li> Copy contents to paste buffer (CTRL-A CTRL-C) </li>
-                      <li> Paste in Source text control (CTRL-V).
-                           You can directly type into source control or edit what you paste.
+                      <li> Paste in Source text control (CTRL-V). 
+                           You can directly type into source control or edit what you paste. 
                            You can resize the control by dragging from the lower right hand corner. </li>
-                      <li> You can copy any prompt from the Previous Prompts control and paste it into the Repeating Context Control.
+                      <li> You can copy any prompt from the Previous Prompts control and paste it into the Repeating Context Control. 
                            You can also ammend or write your own.</li>
-                    </ol>
+                    </ol>  
                   <li> Simplify </li>
                     <ol>
                       <li> Click one of the modes: "Play"  <i class='fas fa-play' > </i>,  or
-                                                   "Next"  <i class='fas fa-step-forward' > </i>
+                                                   "Next"  <i class='fas fa-step-forward' > </i>                                      
                                                     </li>
-                      <li> You will see the source broken into chunks based on the chunk size control.
+                      <li> You will see the source broken into chunks based on the chunk size control. 
                            This takes the number of words then backs up to previous chunk separator. </li>
                       <li> As chunks are split from source, they are placed in Current Chunk control with the number of the current chunk. </li>
                       <li> The application will send the chunk to chap-gpt for processing. </li>
                       <li> Upon completion of the chunk, the application will place the processed text into the "Simplified Chunk Control. </li>
                       <li> Depending on the mode one of the following will happen: </li>
                         <ul>
-                          <li> If you had pressed "Play" <i class='fas fa-play' > </i> then the Simplified chunk will be added to the end of the
-                               "Combined Simplified Text."
+                          <li> If you had pressed "Play" <i class='fas fa-play' > </i> then the Simplified chunk will be added to the end of the 
+                               "Combined Simplified Text." 
                                Then the application will process the next chunk until completion or, </li>
                             <ul>
                               <li> You click pause <i class='fas fa-pause' > </i> and the application will enter single step mode at end of current chunk. </li>
                             </ul>
-                          <li> If you then click "Next"<i class='fas fa-step-forward' > </i> the application will process one chunk.
+                          <li> If you then click "Next"<i class='fas fa-step-forward' > </i> the application will process one chunk. 
                                It will not place result in Combined control until you press next again. This allows reprocessing a chunk. </li>
-                          <li> If you press redo <i class='fas fa-redo' > </i> instead of Next,
+                          <li> If you press redo <i class='fas fa-redo' > </i> instead of Next, 
                                application will reprocess the same chunk presumably after you tweaked the original or the prompt.</li>
                           <!-- li> </li -->
                         </ul>
-                    </ol>
-                  <li> Refine </li>
+                    </ol>  
+                  <li> Refine
                     <ol>
-                      <li> You can copy the simplified or combined  text back into the source text and select another prompt.
+                      <li> You can copy the simplified or combined  text back into the source text and select another prompt. 
                            For example you could refine the simplification like changing tone or translate to another language. </li>
                       <li> You can cut parts of the buffered original and reprocess it. </li>
-                    </ol>
-                  <li> Harvest </li>
+                    </ol> 
+                  </li>
+                  <li> Harvest 
                     <ol>
                       <li> If you especially like one of your own prompts, you can paste it into the Previous Prompts control for later reuse. </li>
                       <li> Cut the Target control and paste it into a new file named similar to original. </li>
                     </ol>
-                  <li> Persistance </li>
-                    <ul>
-                      <li> The application attempts to save your text in your local storage any time you edit something.
+                  </li>
+                  <li> Persistance 
+                    <ul> 
+                      <li> The application attempts to save your text in your local storage any time you edit something. 
                            If you restart the app it will recall it from local storage.
                            Don't trust it for permanent storage as browser may reclaim space by removing your local storage. </li>
                     </ul>
-                  <li> Cost </li>
-                    <ul>
-                      <li> The Chatbot API is not free.
-                           It is generally a few cents per document depending on how many times you reprocess it with different prompts.
-                           You can open your account and click on Usage to see your monthly bill.
-                           Once you get acceptable results you should save the prompt for future use to minimize cost.</li>
+                  </li>
+                  <li> Cost 
+                    <ul> 
+                      <li> The Chatbot API is not free. 
+                           It is generally a few cents per document depending on how many times you reprocess it with different prompts. 
+                           You can open your account and click on Usage to see your monthly bill. 
+                           Once you get acceptable results you should save the prompt for future use to minimize cost. </li>
                     </ul>
+                  </li>
+                  <li> Troubleshooting 
+                    <p> Sometimes things don't go as you plan. This section attempts to help when things go wrong. </p>
+                    <ul> 
+                      <li> There is a status indicator below the "Enter Source Text" area. 
+                           This will flash problems as they occur or indicate the current state of the app.
+                           Sometimes the information "flies by" too quickly. </li>
+                      <li> The log <i class='fa fa-list'></i> captures most activities during a session. You can display this to see more of what has happened. </li>
+                      <li> You can clear the log by clicking the trash can <i class='fa fa-trash'></i> icon. </li>
+                      <li> You can make the log display in real time by checking the box before the fast forward <i class='fa fa-fast-forward'></i> can icon. </li>icon. </li>
+                      <li> Finally contact the training department at unfoldingWord for further support information.</li>
+                      <li> <em>Some response codes you may see</em>
+                        <table>
+                          <tbody>
+                            <tr><td> 200</td><td> Success                                      </td></tr>
+                            <tr><td> 400</td><td> Invalid request (invalid api key, bad model) </td></tr>
+                            <tr><td> 401</td><td> Unauthorized error, which indicates that 
+                                                  authentication is required and has failed 
+                                                  or has not yet been provided                 </td></tr>
+                            <tr><td> 403</td><td> Forbidden error specifically indicates that 
+                                                  the request is understood but the server is 
+                                                  refusing to fulfill it. Could be restricted 
+                                                  by permissions,IP, rate limiting.            </td></tr>
+                            <tr><td> 429</td><td> Too many requests, credit expired before 
+                                                  12/22 ($18) tokens expired ($5), free 
+                                                  account time (3mo) expired, multiple 
+                                                  accounts on same phone number                </td></tr>
+                            <tr><td> 500</td><td> System Error                                 </td></tr>
+                            <tr><td> 503</td><td> System Overloaded.                           </td></tr>
+                          </tbody>
+                        </table>
+                      </li>  
+                    </ul>
+                  </li>
                 </ol>
               </p>
             </td>
@@ -315,3 +457,4 @@
     </div>
   </body>
 </html>
+
