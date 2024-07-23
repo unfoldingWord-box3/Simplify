@@ -1,3 +1,4 @@
+
   let defaultContext = {
     repeatingContext: "",  repeatingContextHeight: "1em",
     previousPrompts:  "",  previousPromptsHeight:  "2em",
@@ -11,64 +12,149 @@
     model:            "gpt=3.5-turbo",
     endpoint:         "",
     isMarkChunk:      true,
+    bufferTitle0:     "",
     bufferTitle1:     "",
     bufferTitle2:     "",
     bufferTitle3:     "",
     bufferTitle4:     "",
     bufferTitle5:     "",
     bufferTitle6:     "",
+    bufferTitle7:     "",
+    bufferTitle8:     "",
+    bufferTitle9:     "",
     buffers:          0,
+    buffer0:          "",  buffer0Height: "6em",
     buffer1:          "",  buffer1Height: "6em",
     buffer2:          "",  buffer2Height: "6em",
     buffer3:          "",  buffer3Height: "6em",
     buffer4:          "",  buffer4Height: "6em",
     buffer5:          "",  buffer5Height: "6em",
     buffer6:          "",  buffer6Height: "6em",
-    logItems:         0
-  }
-
-/*
-  let models = [
-   { "chat", "gpt-4" },
-     { "chat", "gpt-4-0613" },
-     { "chat", "gpt-4-32k" },
-     { "chat", "gpt-4-32k-0613" },
-     { "chat", "gpt-3.5-turbo" },
-     { "chat", "gpt-3.5-turbo-0613" },
-     { "chat", "gpt-3.5-turbo-16k" },
-     { "chat", "gpt-3.5-turbo-16k-0613 " },
-     { ""    , "text-davinci-003" },
-     { ""    , "text-davinci-002" },
-     { ""    , "text-davinci-001" },
-     { ""    , "text-curie-001" },
-     { ""    , "text-babbage-001" },
-     { ""    , "text-ada-001" },
-     { ""    , "davinci" },
-     { ""    , "curie" },
-     { ""    , "babbage" },
-     { ""    , "ada" },
-  ];
-*/
-
-  let machineState = "";
-  let started = false;
+    buffer7:          "",  buffer7Height: "6em",
+    buffer8:          "",  buffer8Height: "6em",
+    buffer9:          "",  buffer9Height: "6em",
+    bufferToggle0:    true,
+    bufferToggle1:    true,
+    bufferToggle2:    true,
+    bufferToggle3:    true,
+    bufferToggle4:    true,
+    bufferToggle5:    true,
+    bufferToggle6:    true,
+    bufferToggle7:    true,
+    bufferToggle8:    true,
+    bufferToggle9:    true,
+    logItems:         0,
+    bottom:           false,
+    models:           []
+  } 
   let context = {};
+  
+// found at: openai.com/api/pricing
+  let defaultModels = [ // known models their compatabilities and prices
+    { "model": "ada"                         , "target": "",      "input": "$0.00010   ", "output": "$0.00010  ", "units": "1k", "asOf": "7/22" }, 
+    { "model": "babbage"                     , "target": "",      "input": "$0.01      ", "output": "$0.01     ", "units": "1k", "asOf": "" }, 
+    { "model": "babbage-002"                 , "target": "",      "input": "$0.00040   ", "output": "$0.00040  ", "units": "1k", "asOf": "7/22" },
+    { "model": "curie"                       , "target": "chat",  "input": "$0.01      ", "output": "$0.01     ", "units": "1k", "asOf": "" }, 
+    { "model": "davinci"                     , "target": "",      "input": "$0.01      ", "output": "$0.01     ", "units": "1k", "asOf": "" }, 
+    { "model": "davinci-002"                 , "target": "",      "input": "$0.0020    ", "output": "$0.0020   ", "units": "1k", "asOf": "7/22" },
+    { "model": "gpt-3.5-turbo"               , "target": "chat",  "input": "$0.0030    ", "output": "$0.0030   ", "units": "1k", "asOf": "" }, 
+    { "model": "gpt-3.5-turbo-0125"          , "target": "chat",  "input": "$0.00050   ", "output": "$0.00150  ", "units": "1k", "asOf": "7/22" },
+    { "model": "gpt-3.5-turbo-0301"          , "target": "chat",  "input": "$0.00150   ", "output": "$0.0020   ", "units": "1k", "asOf": "" },
+    { "model": "gpt-3.5-turbo-0613"          , "target": "chat",  "input": "$0.00150   ", "output": "$0.0020   ", "units": "1k", "asOf": "" }, 
+    { "model": "gpt-3.5-turbo-1106"          , "target": "chat",  "input": "$0.0010    ", "output": "$0.0020   ", "units": "1k", "asOf": "7/22" },
+    { "model": "gpt-3.5-turbo-16k"           , "target": "chat",  "input": "$0.01      ", "output": "$0.01     ", "units": "1k", "asOf": "" },
+    { "model": "gpt-3.5-turbo-16k-0613"      , "target": "chat",  "input": "$0.0030    ", "output": "$0.0040   ", "units": "1k", "asOf": "7/22" }, 
+    { "model": "gpt-3.5-turbo-instruct"      , "target": "chat",  "input": "$0.00050   ", "output": "$0.0020   ", "units": "1k", "asOf": "7/22" },
+    { "model": "gpt-3.5-turbo-instruct-0914" , "target": "chat",  "input": "$0.01      ", "output": "$0.01     ", "units": "1k", "asOf": "" },
+    { "model": "gpt-4"                       , "target": "chat",  "input": "$0.030     ", "output": "$0.010    ", "units": "1k", "asOf": "7/22" }, 
+    { "model": "gpt-4-0125-preview"          , "target": "chat",  "input": "$0.010     ", "output": "$0.030    ", "units": "1k", "asOf": "7/22" },
+    { "model": "gpt-4-0613"                  , "target": "chat",  "input": "$0.010     ", "output": "$0.01     ", "units": "1k", "asOf": "" }, 
+    { "model": "gpt-4-1106-preview"          , "target": "chat",  "input": "$0.010     ", "output": "$0.030    ", "units": "1k", "asOf": "7/22" },
+    { "model": "gpt-4-32k"                   , "target": "chat",  "input": "$0.060     ", "output": "$0.120    ", "units": "1k", "asOf": "7/22" }, 
+    { "model": "gpt-4-32k-0613"              , "target": "chat",  "input": "$0.060     ", "output": "$0.120    ", "units": "1k", "asOf": "" }, 
+    { "model": "gpt-4-32k-0314"              , "target": "chat",  "input": "$0.060     ", "output": "$0.120    ", "units": "1k", "asOf": "" }, 
+    { "model": "gpt-4-turbo"                 , "target": "chat",  "input": "$0.010     ", "output": "$0.030    ", "units": "1k", "asOf": "7/22" },
+    { "model": "gpt-4-turbo-2024-04-09"      , "target": "chat",  "input": "$0.010     ", "output": "$0.030    ", "units": "1k", "asOf": "7/22" },
+    { "model": "gpt-4-turbo-preview"         , "target": "chat",  "input": "$0.01      ", "output": "$0.01     ", "units": "1k", "asOf": "" },
+    { "model": "gpt-4o"                      , "target": "chat",  "input": "$0.0050    ", "output": "$0.0150   ", "units": "1k", "asOf": "7/22" },
+    { "model": "gpt-4o-2024-05-13"           , "target": "chat",  "input": "$0.0050    ", "output": "$0.0150   ", "units": "1k", "asOf": "7/22" },
+    { "model": "gpt-4o-mini"                 , "target": "chat",  "input": "$0.000150  ", "output": "$0.00060  ", "units": "1k", "asOf": "7/22" },
+    { "model": "gpt-4o-mini-2024-07-18"      , "target": "chat",  "input": "$0.000150  ", "output": "$0.00060  ", "units": "1k", "asOf": "7/22" },
+    { "model": "text-ada-001"                , "target": "chat",  "input": "$0.01      ", "output": "$0.01     ", "units": "1k", "asOf": "" }, 
+    { "model": "text-babbage-001"            , "target": "chat",  "input": "$0.01      ", "output": "$0.01     ", "units": "1k", "asOf": "" }, 
+    { "model": "text-curie-001"              , "target": "chat",  "input": "$0.01      ", "output": "$0.01     ", "units": "1k", "asOf": "" }, 
+    { "model": "text-davinci-001"            , "target": "chat",  "input": "$0.01      ", "output": "$0.01     ", "units": "1k", "asOf": "" }, 
+    { "model": "text-davinci-002"            , "target": "chat",  "input": "$0.01      ", "output": "$0.01     ", "units": "1k", "asOf": "" }, 
+    { "model": "text-davinci-003"            , "target": "chat",  "input": "$0.01      ", "output": "$0.01     ", "units": "1k", "asOf": "" }, 
+    { "model": "text-embedding-3-large"      , "target": "embed", "input": "$0.00013   ", "output": "$0.00013  ", "units": "1k", "asOf": "7/22" },
+    { "model": "text-embedding-3-small"      , "target": "embed", "input": "$0.00002   ", "output": "$0.00002  ", "units": "1k", "asOf": "7/22" },
+    { "model": "text-embedding-ada-002"      , "target": "embed", "input": "$0.01      ", "output": "$0.01     ", "units": "1k", "asOf": "" },
+    { "model": "tts-1"                       , "target": "audio", "input": "$0.01      ", "output": "$0.01     ", "units": "1k", "asOf": "" },
+    { "model": "tts-1-1106"                  , "target": "audio", "input": "$0.01      ", "output": "$0.01     ", "units": "1k", "asOf": "" },
+    { "model": "tts-1-hd"                    , "target": "audio", "input": "$0.01      ", "output": "$0.01     ", "units": "1k", "asOf": "" },
+    { "model": "tts-1-hd-1106"               , "target": "audio", "input": "$0.01      ", "output": "$0.01     ", "units": "1k", "asOf": "" }
+  ];  
+  let models = [];
+  models = defaultModels;
+
+  let validModels = [];
+  let machineState = "";
+  let isContinue = false; 
   let candidate  = "";
+  let sourceText = ""; 
+  let chunkN = 0;
+  let thisChunk = "";
+  let sourceInp;  
+  let currentInp; 
+  let simpleChunk;
 
-/*
-  function cancel() {  // Stop simplification at end of this chunk
-    markState( "Cancelling" );
-    isCancel = true;
+  let cost = {
+    input:  0,
+    output: 0,
   }
-*/
+  
+  function addDot() {                                /**  */
+    var err = document.getElementById( 'chatError' )
+    err.innerText += ".";
+    //err.show;
+  }
 
-  function cancel() {                                /** Stop processing and prepare to restart */
-    started = false;
+  function assessCost( bufr, rep, fin ) {                 /** Compute cost of input tokens using current model and passed text */
+    var rptCost = "";
+    var atr, tokens, price, costParm, cost;
+
+    if( rep ) {          // include repeating context in cost
+      rptCost = $( '#repeatingContext' ).val();
+    }
+
+    var srcCost = $( bufr ).val();
+   
+    if( fin ) {
+      atr = "output";
+    } else {
+      atr = "input";
+    }
+    
+    costParm = defaultModels.find( ( defaultModels ) => defaultModels.model == context.model )[ atr ];
+    cost = parseFloat( costParm.replace( "$", "" ) );
+
+    tokens = String( ( ( srcCost.length ??= 0 ) + ( rptCost.length ??= 0 ) ) / 4 );
+    price = Number.parseFloat( ( tokens * cost ) / 1000  ).toFixed( 6 );
+    return [ tokens, price ];
+  }
+
+  function bufferToggle( idx, val ) {                /** toggle textarea visibility */
+    $( "#buffer" + idx ).toggle();
+    saveContext( "bufferToggle" + idx, val.checked );
+  }
+  
+  function cancel() {                                /** Stop processing at end of current chunk and prepare to restart */                           
     markState( "Canceling" );
-    startStop( "", "play pause next redo cancel" )
+    startStop( "play pause next redo cancel", "" );
+    setError( "" );
   }
-
-  function clearChunks( string ) {
+  
+  function clearChunks( string ) {                   /** Clear out a list of text areas before processing further */ 
     var list = string.split( " " );
 
     for( var itm in list ) {
@@ -79,120 +165,246 @@
   function clearLog() {                              /** Empty log content but leave it displayed */
     $( '#eventLogBody' ).html( "" );
   }
+ 
+  function completePrev() {                          /** Before moving to next step, save results of previous after a pause */
+    document.getElementById( "thisChunk" ).value = thisChunk;
+    var [ tokens, price ] = assessCost( "#thisChunk", true, false );
+    var [ oTokens, oPrice ] = assessCost( "#simpleChunk", false, true );
+    toast( `Completed chunk: ${context.chunkCount} with ${tokens} input tokens at cost ${price} 
+            plus ${oTokens} output tokens at ${oPrice}.`, "Progress" );
+    sourceText = sourceText.substring( thisChunk.length + 1 );
+    sourceInp.value = sourceText;
+    
+    if( candidate.length > 10 ) {
+    document.getElementById( "target" ).value += candidate;
+    candidate = "";
+    }          
+  }
 
-  $( document ).ready( function() {                  /** Things that cannot happen until document is fully loaded */
-    dragElement( document.getElementById( "help" ) );
-    dragElement( document.getElementById( "log" ) );
+  $( document ).ready( function() {                  /** Things that cannot happen until document is fully loaded */ 
+    // make some windows dragable
+      dragElement(  document.getElementById( "help" ) );
+      dragElement(  document.getElementById( "log" ) );
+      dragElement(  document.getElementById( "settings" ) );
+    
+    sourceInp   = document.getElementById( "sourceText" );
+    currentInp  = document.getElementById( "thisChunk" );
+    simpleChunk = document.getElementById( "simpleChunk" );
+
     init();
+
+    $( ".dragable" ).on( 'click', toHigh );
+
+    $( ".textBox" ).on( "resize", function() { scanSizes(); } );  
   } );
 
-  function getContext() {                            /** Retrieve variables from localstorage */
+  function estimateCost() {                          /** Display estimated cost of input tokens using current model and source text */
+    var [ tokens, price ] = assessCost( '#sourceText', true, false );
+    $( '#inputTokens' ).text( tokens );   
+    $( '#inputCost' ).text( price )  ; 
+    var [ otokens, oprice ] = assessCost( '#sourceText', false, true );
+    $( '#outputTokens' ).text( otokens );   
+    $( '#outputCost' ).text( oprice )  ; 
+    $( '#totalCost' ).text( ( parseFloat( price ) + parseFloat( oprice ) ).toFixed( 6 ) );
+  }
+
+  function getContext() {                            /** Retrieve variables from localstorage */    
     context = defaultContext;
     //dbRead( 'settings', '', '' );
     let contextString = localStorage.getItem( "openAiContext" );
-
+    
     if( contextString ) {
       const storedContext = JSON.parse( contextString );
-
+      
       for( var attr in storedContext ) {  // copy from saved context to current context. hint saved may not have all current values
         if( storedContext.hasOwnProperty( attr ) ) {
           context[ attr ] = storedContext[ attr ];
         }
       }
 
-      for( var attr in context ) {  // Copy from current context to form
-        if( context.hasOwnProperty( attr ) && ( attr.indexOf( "Height" ) < 0 ) ) {
+     for( bIdx = 0; bIdx < 10; bIdx += 1 ) {
+       $( "#b" + bIdx ).show();
+     }
+
+      for( var attr in context ) {  // Copy from current context to form  
+        if( context.hasOwnProperty( attr ) && ( attr.indexOf( "Height" ) < 0 ) ) {      
           switch( attr ) {
             case "chunkSize":
               document.getElementById( "chunkSizeValue" ).innerText = context.chunkSize;
               document.getElementById( attr ).value = context[ attr ];
               break;
-
+            
             case "chunkSeparator":
               $( "#" + attr ).val( context.chunkSeparator ).change();
               break;
-
-            case "isMarkChunk":
+              
+            case "isMarkChunk":  
               document.getElementById( "isMarkChunk" ).checked   = context.isMarkChunk;
               break;
-
+            
             case "buffers":
             case "chunkCount":
             case "isMarkChunks":
-            case "model":
               break;
 
+            case "model":
+              $( "#model" ).val( context.model );
+              break;
+          
+            case "bufferTitle0":
             case "bufferTitle1":
             case "bufferTitle2":
             case "bufferTitle3":
             case "bufferTitle4":
             case "bufferTitle5":
             case "bufferTitle6":
+            case "bufferTitle7":
+            case "bufferTitle8":
+            case "bufferTitle9":
               if( context.hasOwnProperty( attr ) ) {
                 var ttl = document.getElementById( attr );
                 ttl.value = context[ attr ];
-                ttl.style.height = context[ attr + "Height" ];
+                ttl.style.height = context[ attr + "Height" ];  
               }
               break;
-
+              
             case "previousPrompts": // These have height attributes that may change
             case "repeatingContext":
             case "sourceText":
             case "thisChunk":
             case "simpleChunk":
             case "target":
+            case "buffer0":
             case "buffer1":
             case "buffer2":
             case "buffer3":
             case "buffer4":
             case "buffer5":
             case "buffer6":
+            case "buffer7":
+            case "buffer8":
+            case "buffer9":
               var obj = document.getElementById( attr );
               obj.value = context[ attr ];
-              obj.style.height = context[ attr + "Height" ];
+              obj.style.height = context[ attr + "Height" ];               
               break;
-
+            
+            case "bufferToggle0":
+            case "bufferToggle1":
+            case "bufferToggle2":
+            case "bufferToggle3":
+            case "bufferToggle4":
+            case "bufferToggle5":
+            case "bufferToggle6":
+            case "bufferToggle7":
+            case "bufferToggle8":
+            case "bufferToggle9":
+              var idx = attr.slice( -1 );
+              $( "#" + attr ).prop( "checked", context[ attr ] ).change();  
+              $( "#buffer" + idx ).css( "display", context[ attr ] ? "inline" : "none" );   
+              break;
+              
             default:
-              if( context[ attr ] ) {
-                console.log( attr );
+              toast( `Getting: ${attr}`, 'Progress' );
+              
+              if( document.hasOwnProperty( attr ) ) {
                 document.getElementById( attr ).value = context[ attr ];
+              } else {
+                toast( `Unsupported property in local storage: ${attr}`, 'Fault' );
               }
           }
         }
-      }
+      }      
     }
-
-    for( bIdx = 1; bIdx < 7; bIdx += 1 ) {
-      $( "#b" + bIdx ).show();
-    }
-
+    
+     
 //    $( "#newBuffers" ).show();
   }
 
-  function hide( id ) {
-    toggle( id );
-    context.buffers -= 1;
+  function getModels() {                             /** Retrieve chatgpt supported models */ 
+    const subscriptionKey = "Bearer " + localStorage.getItem( "openAiKey" );
+    const endpoint = 'https://api.openai.com/v1/models';
+    var valid = [];
 
-    if( context.buffers < 7 ) {
-      $( "#newBuffers" ).show();
-    }
+    fetch( endpoint, {
+      mode:      "cors",
+      headers: { "Authorization": subscriptionKey }
+    } )
+    
+    .then( response => response.json() )
+    .then( obj => {
+      obj.data.map( item => validModel( item.id ) );   
+//      obj.data.map( item => defaultModels
+      validModels.sort();
+      document.getElementById( "model" ).innerHTML = validModels.join( "\n" );
+      $( "#model" ).val( context.model ); // select default model
+      initModels();
+      }
+    )
+    .catch( error => {
+      console.error( error );
+      setError( error );
+    });
   }
-
-  function init() {
-//    initDb( 'simplify', 'context' );
-    getContext();
+  
+  function init() {                                  /** Configure app at startup */
     markState( "Initializing" );
+//  initDb( 'simplify', 'context' );
+    getModels();  // set default model
+    getContext(); // override all defaults with saved data
     markState( "Idling" );
     startStop( "play next", "pause redo cancel" );
+  }
+  
+  function initModels() {                            /**  */
+    var mdlAry = [];
+    var mdlObj =  document.getElementById( "modelSettingsBody" );
+    var mdlIdx = 0;
 
+    for( itm in models ) { 
+      mdlAry.push( 
+        `<tr>
+           <td>                                       ${models[mdlIdx].model} </td> 
+           <td> <input type='text' name='${mdlIdx}-target' class='edt' value='${models[mdlIdx].target}'> </td> 
+           <td> <input type='text' name='${mdlIdx}-input'  class='edt' value='${models[mdlIdx].input}'  > </td> 
+           <td> <input type='text' name='${mdlIdx}-output' class='edt' value='${models[mdlIdx].output}'  > </td> 
+         </tr>` );
+        mdlIdx += 1;
+    }
+
+    mdlObj.innerHTML = mdlAry.join( "\n" )
+    $( '.edt' ).on( "change", function() { 
+      var itm = this.value;
+      var [row, id] = this.name.split( "-" );
+      /*context.*/models[row][id] = itm;
+//      saveContext();
+    } );
   }
 
+  function initStepper() {                           /** set up the first chunk */
+    isContinue = true;
+    toast( "Init Stepper.", "Progress" );
+    startStop( "cancel pause", "play next redo" );
+    clearChunks( "thisChunk simpleChunk target" );
+
+/*// manage history  
+    let hist = document.getElementById( "history" );
+    let combined = localStorage.getItem( "openAiHistory" );
+    hist.value = combined;
+*/    
+
+    sourceText = sourceInp.value;
+    chunkN = parseInt( Math.max( sourceText.split( " " ).length / context.chunkSize, 1 ) );
+    context.chunkCount = 0;
+    thisChunk = "";
+  }
+  
   function markState( txt ) {                        /** Set overall machine state to control action buttons */
     machineState = txt;
     toast( txt, "Progress" );
   }
-
-  function newBuffer() {                             /** Add a buffer to list */
+  
+/*function newBuffer() {                             / ** Add a buffer to existing list * /
     context.buffers += 1;
 
     if( context.buffers < 6 ) {
@@ -203,113 +415,153 @@
 //      $( "#newBuffers" ).hide();
     }
   }
+*/
 
   function next() {                                  /** resume processing next chunk */
     markState( "Stepping" );
+    setError( "" );
+    startStop( "pause cancel", "play next redo" );
 
-    if( ! started ) {
-      simplifyProcess();
+    if( ! isContinue ) {
+      initStepper();
+      simplifyProcess();    
+    } else {
+      completePrev();
     }
+  }
+   
+  function nextStep() {                              /** set up the next chunk */
+    toast( "Next Step.", "Progress" );
+    context.chunkCount += 1;
 
-    startStop( "cancel", "play pause redo next" );
+    let pos = sourceText.split( " ", context.chunkSize ).join( " " ).length;
+
+    if( pos < 0 ) {  // if no delimiter then send whole chunk
+      thisChunk = sourceText;
+    } else {
+      thisChunk = sourceText.substring( 0, pos );        
+    }
+   
+    let separatorPosition = thisChunk.lastIndexOf( context.chunkSeparator );
+
+    if( separatorPosition >= 0 ) { // backup to separator
+      thisChunk.substring( 0, separatorPosition );
+    }
+    
+    currentInp.value = thisChunk;
   }
 
   function pause() {                                 /** interrupt simplification */
     markState( "Pausing" );
-    startStop( "cancel", "play pause next redo" );
+    startStop( "play cancel next redo", "pause " );
+    setError( "" );
   }
-
+  
   function play() {                                  /** start or resume simplification */
     markState( "Playing" );
-
-    if( ! started ) {
-      simplifyProcess();
-    }
-
     startStop( "pause cancel", "play redo next" );
-  }
+    setError( "" );
 
-  function redo() {                                  /** reprocess current chunk */
+    if( ! isContinue ) {
+      initStepper();
+      simplifyProcess();
+    }    
+  }
+  
+  async function processStep() {                     /** call chatgpt with request and wait for response */
+    showSizes();
+    toast( `Simplifying chunk: ${context.chunkCount} of  ${chunkN} chunks.`, "Progress" );   
+    document.getElementById( "chunkNumber" ).innerText = context.chunkCount;
+    document.getElementById( "chunkProgress" ).value = parseInt( ( context.chunkCount / chunkN ) * 100 );
+    
+    await simplifyText( thisChunk, context.chunkCount );  
+  }
+  
+  function redo() {                                  /** reprocess current chunk */                          
     markState( "Redoing" );
-    document.getElementById( "simpleChunk" ).value = "";
+    clearChunks( "simpleChunk" );    
     startStop( "pause cancel", "play next redo" );
+    setError( "" );
   }
+  
+  function removeLocalStorage() {                    /** Confirm user wants to reset app to initial conditions (keeping API key) */
+    if( window.confirm( "Warning: This will remove all locally stored data except API Key." ) ) {
+      localStorage.removeItem( 'openAiContext' );
+      init();
+      toast( "Reset", "Complete" );
+    } else {
+      toast( "Reset", "Canceled" );
+    }
+  } 
 
-  function saveContext( attr, val ) {                /** Save all persistent variables in localstorage */
+  function saveContext( attr, val ) {                /** Save all persistent variables in localstorage */    
     markState( "Saving" );
 
     if( attr ) {
-      switch( attr ) {
+      switch( attr ) {  
         case "chunkSize":
           document.getElementById( "chunkSizeValue" ).innerText = val; // this is a span
           break;
-
+        
         case "chunkSeparator":
           context.chunkSeparator = $('#chunkSeparator').find(":selected").val();
           break;
-
+          
         case "model":
+//          oontext.model = $( '#model' ).val();
+          break;
+
+        case "sourceText":
+          startStop( "play next", "pause cancel redo" );
           break;
 
         default:
-          document.getElementById( attr ).value = val; // normal context attributes
+          if( attr.slice( 0, -1 ).indexOf( "bufferToggle" ) >= 0 ) {
+            context[ attr ] = val;
+          } else {
+            if( document.hasOwnProperty( attr ) ) {
+              document.getElementById( attr ).value = val; // normal context attributes
+            } else {
+              toast( `No longer such property as: ${attr}`, 'Fault' );
+            }
+          }
       }
-
-      scanSizes();
+      
+      estimateCost();
       context[ attr ] = val;
-      localStorage.setItem( "openAiContext", JSON.stringify( context ) );
+      scanSizes();       
       markState( "Saved" );
     }
   }
-
-  function scanSizes() {                             /** Look for resized textareas and save them context */
+        
+  function scanSizes() {                             /** Look for resized textareas and save them in context */    
     $( '.resizable' ).each( function( id ) {
-      var ta = this[ 'id' ];
-      var h = document.getElementById( ta );
-      context[ ta + "Height" ] = h.style.height;
+      var tElem = this[ 'id' ];
+      var h = document.getElementById( tElem );
+      context[ tElem + "Height" ] = h.style.height;
     } );
-  }
 
-/*  let hist = document.getElementById( "history" );
+    localStorage.setItem( "openAiContext", JSON.stringify( context ) );
+  }
+  
+/*  let hist = document.getElementById( "history" ); / **  * /
   localStorage.getItem( "openAiHistory" );
   getModels();
   */
-
-/*  function getModels() {                           /** Retrieve chatgpt supported models */ /*
-    const subscriptionKey = "Bearer " + localStorage.getItem( "openAiKey" );
-    const endpoint = 'https://api.openai.com/v1/models';
-
-    fetch( endpoint, {
-      mode:      "cors",
-      headers: { "Authorization": subscriptionKey }
-    } )
-
-    .then( response => response.json() )
-    .then( obj =>
-      document.getElementById( "models" ).innerHTML =
-      obj.data.map( item => "<option value='" + item.id + "' > " + item.id + " </option>" )
-    )
-    .catch( error => {
-      console.error( error );
-    });
-  }
-  */
-
-/*  function pickModel() {                           /** Choose one of the chatgpt supported models */ /*
-  }
-*/
-
+   
 /* --- repeating prompts -----------------------------------------------------------------
-Please simplify the following text without comment.
+Please simplify the following text without comment. 
 
-Reword the following text so that a 6th grader, whose primary language is non-English, can understand it.
+Reword the following text so that an English as a second language 6th grader, can understand it. Retain all tables, titles and headers. 
 
 Convert the following text to Hindi.
 
 Reduce this text to 5 bullet points.
--------------------------------------------------------------------- */
 
-/* --- source text -----------------------------------------------------------------
+Translate to Hindi
+-------------------------------------------------------------------- */
+     
+/* --- source text -----------------------------------------------------------------   
 # Learning Principles - Facilitator Guide
 
 # Principles of Training
@@ -432,7 +684,7 @@ Transition to the next section by stating:
 
 **Enhancing Engagement**
 
-|  | Emphasize that adults are motivated by their ability to contribute to a worthwhile endeavor in a meaningful way. Two of the most common ways to accomplish this are to explain the Big Picture and use WIIFM statements.
+|  | Emphasize that adults are motivated by their ability to contribute to a worthwhile endeavor in a meaningful way. Two of the most common ways to accomplish this are to explain the Big Picture and use WIIFM statements. 
  |
 | --- | --- |
 
@@ -739,163 +991,191 @@ Depending on your schedule, this is a good point to take a break. The first part
 - “We will learn how to evaluate the effectiveness of the training we deliver.
   */
 
-  async function simplifyProcess() {                        /** Walk through the source text breaking off chunks and sending them to chatgpt */
-    //markState( "Playing" );
-    started = true;
-    //toast( "Playing.", "Progress" );
-    startStop( "cancel pause", "play next redo" );
-    let src  = document.getElementById( "sourceText"  );
-    clearChunks( "thisChunk simpleChunk target" );
-/*  // manage history
-    let hist = document.getElementById( "history" );
-    let combined = localStorage.getItem( "openAiHistory" );
-    hist.value = combined;
-*/
+  function setError( txt ) {                         /** Put some exception text near app state for a few seconds */
+    document.getElementById( 'chatError' ).innerText = txt;
 
-    srcText = src.value;
-//console.log( "|" + srcText + "| ChunkSize: " + context.chunkSize );
-    let chunkN = parseInt( Math.max( srcText.split( " " ).length / context.chunkSize, 1 ) );
-    context.chunkCount = 1;
-    let thisChunk = "";
-//    document.getElementById( "target" ).value = "";
-    let current = document.getElementById( "thisChunk" );
-     document.getElementById( "simpleChunk" ).value = "";
+    setTimeout( function(){ // After 5 seconds, remove the show class from DIV
+      document.getElementById( 'chatError' ).innerText = ""; 
+    }, 10000 );
+  }
+   
+  function setKey() {                                /** Save secret chatgpt key in localstorage */    
+     var retVal = prompt("Enter your OpenAI API Key: ", "your key here" );
+     
+     if( retVal.length > 20 || retVal.indexOf( "your key here" ) < 0 ) {
+       localStorage.setItem( "openAiKey", retVal );
+     }
+  }
+  
+  function showSizes() {                             /**  */
+  }
 
-    while( srcText.length > 0 && started ) {
-      let pos = srcText.split( " ", context.chunkSize ).join( " " ).length;
+  async function simplifyProcess() {                 /** Walk through the source text breaking off chunks and sending them to chatgpt */    
+    toast( `Simplifying: ${machineState} with ${context.model}`, "Progress" );
+    
+    while( sourceText.length > 0 && isContinue ) {
+      switch( machineState ) {
+        case "Initing":
+          break;
+        
+        case "Idling":
+          break;
 
-      if( pos < 0 ) {  // if no delimiter then send whole chunk
-        thisChunk = srcText;
-      } else {
-        thisChunk = srcText.substring( 0, pos );
+        case "Stepping":
+          nextStep();
+          await processStep();
+          markState( "Pausing" );
+          break;
+          
+        case "Pausing":
+          startStop( "play next redo cancel", "pause" );  
+          // we get here every couple seconds but otherwise do nothing           
+          break;
+        
+        case "Playing":
+          setError( "" );
+         
+          if( context.chunkCount > 0 ) {
+            completePrev();
+          }
+
+          nextStep();
+          await processStep();
+          break        
+          
+        case "Redoing":
+          await processStep();
+          markState( "Pausing" );
+          break;
+          
+        case "Canceling":
+          isContinue = false;
+          break;
       }
-
-      let separatorPosition = thisChunk.lastIndexOf( context.separator ).length;
-
-      if( separatorPosition >= 0 ) { // backup to separator
-        thisChunk.substring( 0, separatorPosition );
-      }
-
-      current.value = thisChunk;
-      toast( "Simplify chunk: " + context.chunkCount, "Progress" );
-      document.getElementById( "chunkNumber" ).innerText = context.chunkCount;
-      document.getElementById( "chunkProgress" ).value = parseInt( ( context.chunkCount / chunkN ) * 100 );
-      await simplifyText( thisChunk, context.chunkCount );
-      context.chunkCount += 1;
-
-      document.getElementById( "thisChunk" ).value = thisChunk;
-      srcText = srcText.substring( thisChunk.length + 1 );
-      src.value = srcText;
-
-      if( machineState.indexOf( "Canceling" ) >= 0 ) {
-        startStop( "", "play pause next redo cancel" );
-        break;
-      }
-
-      //console.log( "sleeping." );
-      await sleep( 1000 );
-
-      if( machineState.indexOf( "Stepping" ) >= 0 ) { // if next then set to pause after 1 loop
-        //console.log( "had single stepped" );
-        markState( "Pausing" );
-      }
-
-      while( machineState.indexOf( "Pausing" ) >= 0 ) {  // wait for redo or next
-        startStop( "", "play pause next redo cancel" );
-        await sleep( 2000 );
-      }
-
-      //markState( "Playing" );
-      //console.log( "Processing." );
-
-      if( candidate.length > 10 ) {
-        document.getElementById( "target" ).value += candidate;
-        candidate = "";
-      }
-
+        
+      await sleep( 3000 ); // throttle ai process to one call per second and check status once per second
+      addDot(); 
 /*
       hist.value += "\n" + srcText;
       localStorage.setItem( "openAiHistory", hist.value );
       src.value = ""
 */
-
     }
-
-    toast( "End of Text.", "Complete" );
+    
+    switch( machineState ) {
+      case  "Canceling":
+        toast( "Canceled", "Complete" );
+        setError( "Canceled" );
+        break;
+        
+      default:
+        isContinue = false;
+        startStop( "", "play pause next redo cancel" ); 
+        toast( "End of Text.", "Complete" );
+        setError( "End Of Text" );
+    }
+    
     startStop( "play next", "pause redo cancel" );
     markState( "Idling" );
   }
 
   async function simplifyText( text, chunkCount ) {  /** invoke chat-gpt */
+//    var mod = $( '#model' ).val();
+//    var mod = context.model;
+    var resp = "";
+
+    if( context.model == null ) {
+      toast( "No model selected. First select a model", "Fault" );
+      return;
+    }
+
     const subscriptionKey = "Bearer " + localStorage.getItem( "openAiKey" );
     //const organizationKey = localStorage.getItem( "openAiOrg" );
     const endpoint = 'https://api.openai.com/v1/chat/completions';
-/*
-    const queryParams = '?q=' + encodeURIComponent( text ) +
+/*    
+    const queryParams = '?q=' + encodeURIComponent( text ) + 
         '&count=10&offset=0&mkt=en-us&safesearch=Moderate';
-    let model = document.getElementById( "models" );
-    selectedModel = model.value;
 */
-
+ 
     await fetch( endpoint, {
       method:   "POST",
       mode:     "cors",
       headers:  {
-        "Content-Type":  "application/json",
+        "Content-Type":  "application/json",      
         "Authorization": subscriptionKey
       },
-      "body": JSON.stringify( {
-        "model":      "gpt-3.5-turbo", //selectedModel,
-        "temperature": 0.2,
+      "body":            JSON.stringify( {
+        "model":         context.model, //"gpt-3.5-turbo", // $( '#model' ).val(),       //"default gpt-3.5-turbo", //selectedModel, 
+        "temperature":   Number( $( '#temperature' ).val() ), // default to 0.2
         "messages": [ {
-           "role":    "user",
-           "content": context.repeatingContext + " " + text
-         } ]
+           "role":       "user", 
+           "content":    context.repeatingContext + " " + text
+         } ] 
        } )
     } )
-    .then( response => response.json() )
-    .then( data => {
-      //console.log( "Simplified in target" );
-      var sep = "\n";
+    .then( response => response.json() ) 
+    .then( data => { // got a response.. but wait there may be more
 
-      if( context.isMarkChunk ) {
-        sep = "\n\n---" + chunkCount + "---\n\n";
+      var res = data.error;
+
+      if( res ) {
+        toast( `Error: ${JSON.stringify( res.message )}`, "Fault" );
+        setError( res.message.slice( 0, 60 ) + "... See Log." );
+        cancel();
+      } else {
+
+        var sep = "\n";
+      
+        if( context.isMarkChunk ) {
+          sep = "\n\n---" + chunkCount + "---\n\n";
+        }
+      
+        document.getElementById( "simpleChunk" ).value = data.choices[0].message.content;
+        document.getElementById( "simplifiedNumber" ).innerText = chunkCount;
+        candidate = sep + data.choices[0].message.content;
+//      toast( `Got Data: ${data.choices[0].message.content.slice(0,10)}`, "Progress" );
       }
-
-      document.getElementById( "simpleChunk" ).value =   data.choices[0].message.content;
-      document.getElementById( "simplifiedNumber" ).innerText = chunkCount;
-      candidate = sep + data.choices[0].message.content;
-//      document.getElementById( "target" ).value += sep + data.choices[0].message.content;
     } )
     .catch( error => {
-      toast( "simplifyText: " + error.message, "Fault" );
-    });
+      setError( `simplifyText: ${error.message}`, "Fault" );
+    });  
   }
-
-  function setKey() {                                /** Save secret chatgpt key in localstorage */
-     var retVal = prompt("Enter your OpenAI API Key: ", "your key here" );
-
-     if( retVal.length > 20 || retVal.indexOf( "your key here" ) < 0 ) {
-       localStorage.setItem( "openAiKey", retVal );
-     }
+    
+  function sleep( ms ) {                             /** suspend processing for some time */    
+    return new Promise( resolve => setTimeout( resolve, ms ) );
   }
-
+  
   function startStop( buttonStart, buttonStop ) {    /** turn on and off sets of action buttons */
     if( buttonStart != "" ) {
       var startList = "#" + buttonStart.trim().split( " " ).join( ", #" );
       $( startList ).removeClass( "disabled-button" );
     }
-
+    
     if( buttonStop != "" ) {
       var stopList = "#" + buttonStop.trim().split( " " ).join( ", #" );
       $( stopList ).addClass( "disabled-button" );
     }
   }
-
-  function sleep( ms ) {                             /** suspend processing for some time */
-    return new Promise( resolve => setTimeout( resolve, ms ) );
-  }
-
+  
   function toggle( divId ) {                         /** toggle div visibility */
     $( divId ).toggle();
   }
+  
+  function toHigh( id ) {                            /** move this dragable to top of stack on click */
+    $( ".dragable" ).each( function() { $( this ).removeClass( "high" ) } )
+    $( this ).addClass( "high" );
+  }
+
+  function validModel( itm ) {                       /** See if retrived model works with opanai chat */
+    for( idx in defaultModels ) {
+      if( itm.indexOf( defaultModels[idx].model ) >= 0 ) {
+        if( defaultModels[idx].target.indexOf( 'chat' ) >= 0 ) {
+          validModels.push( "<option value='" + itm + "' > " + itm + " </option>" );
+          return;
+        }
+      }
+    }
+  }
+
+
+  
