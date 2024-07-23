@@ -32,8 +32,8 @@ Use Chatgpt to simplify training content for less capable readers.
     - Pressing it again will move the current simplified chunk to the combined text window then process one more chunk
     - Pressing the play will run from the current chunk to the end.
     - The Eject button will stop processing the current document.
-    - The Redo button will reprocess the same chunk.  
-- There is a ? in the upper left hand corner which displays help text for more information.
+    - The Redo button will reprocess the same chunk after a pause.  
+- There is an (i) button in the upper right hand corner which when clicked will display help text for more information.
 ## Details
 - This app is client-side javascript with with no dependencies on other libraries.
 - Only tested on Chrome.
