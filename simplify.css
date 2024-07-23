@@ -3,7 +3,7 @@
     background-color: lightgrey;
     margin: 0;
   }
-
+    
   header, button {
     background-color: #31ADE3;
     color:            white;
@@ -14,7 +14,7 @@
     margin: 0;
     padding: 0;
   }
-
+  
   th {
     margin: 0;
     padding: 5px;
@@ -23,37 +23,90 @@
     background: white;
     border-bottom: thin solid grey;
   }
-
+    
   h3 {
     margin: 0;
   }
-
+    
   .blk {
     position: relative;
     float: left;
     padding-right: 10px;
   }
+  
+  .edt {
+    width: 5em;
+  }
 
   .clear {
     clear: left;
   }
-
+  
   .title {
     margin: 0;
     padding-top: 0.7em;
   }
-
+    
   .rest {
-    width: calc( 100vw - thisChunk.width );
+    h/eight: calc( thisChunk.width );    
   }
-
+  
   .sidebyside {
-    width: 49%;
-    float: left;
+    box-sizing: content-box;
+    width: 48%;
   }
 
+  .logBody, .helpBody, .settingsBody {
+    position:          relative;
+    display:           block;
+    border:            none;
+    overflow:          auto;
+    height:            75%;
+    p/adding-bottom: 20px;
+    m/argin-bottom: 10px;
+  }
+
+  .logPage, .settingsPage {
+    position:         absolute;
+    left:             25%;
+    top:              25%;
+    width:            5.5in;
+    background-color: white;
+    border-radius:    4px;
+    display:          none;
+    max-height:       8in;
+    overflow:         hidden;
+    scroll: none;
+    padding-bottom:   30px;
+  }
+  
+  #eventLogBody {
+    scroll-snap-type: y proximity;
+  }
+  
+  #eventLogBody:last-child() {
+    scroll-snap-align: end;
+  }
+  
+/* 
+  #simpleChunk {
+    anchor-name: --sideAnchor;
+    anchor-size( height );
+  }
+
+  #thisChunk {
+    height: anchor-size( --sideAnchor height );
+    resize: none;
+  }
+*/
+  
   .wide, .buffer {
     width: 99%;
+  }
+  
+  .botm { 
+    border: thin solid grey;
+    margin-right: 3px;
   }
 
   header {
@@ -62,7 +115,7 @@
     vertical-align: middle;
     top: 0;
   }
-
+    
   button {
     border-radius: 5px;
     border: thin solid lightgrey;
@@ -71,7 +124,7 @@
 
   .dragable {
     display:          none;
-    position:         absolute;
+    position:         fixed;
     top:              30%;
     left:             25%;
     z-index:          1000;
@@ -82,21 +135,39 @@
     background-color: white;
     color:            black;
     margin:           0;
-    padding:          10px;
-    overflow:         auto;
+    padding:          5px;
     resize:           both;
   }
+
+  .settingsPage { width: 5in; }
+  .logPage {      width: 6in; }
 
   .hdr {
     border-bottom: thin solid grey;
   }
-
+  
+  .resizable {
+    resize: vertical;
+  }
+  
   .textBox {
     border-radius: 5px;
     border: thin solid lightgrey;
     height: 4em;
     width: 100%;
+    padding: 5px;
+    margin: 2px;
   }
+
+/*  .flxrow {
+    box-sizing: content-box;
+    display: flex;
+  }
+
+  .col {
+    flex: 1;
+  }
+*/
 
   .bufferTitle {
     border: thin solid lightgrey;
@@ -107,7 +178,7 @@
   .bufferGroup {
     width: 99%;
   }
-
+  
   .buffer {
     width: 100%;
     display: none;
@@ -117,10 +188,10 @@
   #repeatingContext {
     height: 2em;
   }
-
+    
   #chatError {
     color: red;
-  }
+  }  
 
   #mainPage {
     padding: 1em;
@@ -131,7 +202,7 @@
     background-color: #eee;
     padding: 7px;
   }
-
+    
   #config-title {
     font-size: 1.5em;
     border: none;
@@ -140,17 +211,21 @@
   #help {
     top: 2in;
     left: 2in;
-    width: 7in;
+    width: 5in;
     height: 5in;
     padding: 0;
     margin: 0;
     border: thin solid grey;
     background-color: white;
-    position: absolute;
+    p/osition: absolute;
     overflow: auto;
-    z-index: 5;
+    z-index: 1000;
     display: none;
     resize: both;
+  }
+
+  .high { /* must be after all dragables */
+    z-index: 1010;
   }
 
   .disabled-button {
@@ -159,3 +234,4 @@
     cursor:          not-allowed;
     pointer-events:  none;
   }
+  
