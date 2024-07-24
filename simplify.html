@@ -22,10 +22,10 @@
           <tr>
             <td> <h3 class="title" > Simplify </h3></td>
             <td style="text-align: right;" > 
-              <!-- i class='fas fa-clone'     onclick="toggle( '#diff'     )" > </i --> 
-              <i class='fas fa-list'      onclick="toggle( '#log'      )" > </i> 
-              <i class='fas fa-cog'       onclick="toggle( '#settings' )" > </i> 
-              <i class='fas fa-info'      onclick="toggle( '#help'     )" > </i> 
+              <span data-text='Show differences' class='tooltip'> <i class='fas fa-clone'     onclick="toggle( '#diff'     )" > </i> </span>
+              <span data-text='Show event log'   class='tooltip'> <i class='fas fa-list'      onclick="toggle( '#log'      )" > </i> </span>
+              <span data-text='Show settings'    class='tooltip'> <i class='fas fa-cog'       onclick="toggle( '#settings' )" > </i> </span>
+              <span data-text='Offer help'       class='tooltip'> <i class='fas fa-info'      onclick="toggle( '#help'     )" > </i> </span>
             </td>
           </tr>
         </tbody>
@@ -33,42 +33,46 @@
     </header>
     
     <div id="config" > 
-      <span id="config-title"> Getting Started: Configuration </span> (<input name='configed' type='checkbox' onclick='toggle("#conf")' checked > hide) <br>
+      <span id="config-title"> Getting Started: Configuration </span> 
+      <span data-text='Toggle config info' class='tooltip'> 
+        <input name='configed' type='checkbox' onclick='toggle("#conf")' checked > </span> <br>
       <div id='conf'>
         1. <button onclick="setKey()">    Set API Key </button> 
-        Set up an OpenAI account then enter key here. <br>
+          Set up an OpenAI account then enter key here. <br>
 
         2. Next pick a Model
-        <select id="model" onchange="saveContext( 'model', this.value )" >
-        </select> <br>
+          <select id="model" onchange="saveContext( 'model', this.value )" >
+          </select> <br>
         3. Periodically, examine cost of model against current "Source Text":<br> 
-        <table class='cost'>
-          <tr c/lass='cost' > <td>       </td>  <th>Tokens            </th>  <th>Cost($)          </th> </tr>
-          <tr c/lass='cost' > <th> Input </th>  <td id='inputTokens'> </td>  <td id='inputCost'> </td> </tr>
-          <tr c/lass='cost' > <th> Output</th>  <td id='outputTokens'></td>  <td id='outputCost'></td> </tr>
-          <tr c/lass='cost' > <th> Total </th>  <td>                  </td>  <td id='totalCost'> </td> </tr>
-        </table> 
+          <table class='cost'>
+            <tr c/lass='cost' > <td>       </td>  <th>Tokens            </th>  <th>Cost($)          </th> </tr>
+            <tr c/lass='cost' > <th> Input </th>  <td id='inputTokens'> </td>  <td id='inputCost'> </td> </tr>
+            <tr c/lass='cost' > <th> Output</th>  <td id='outputTokens'></td>  <td id='outputCost'></td> </tr>
+            <tr c/lass='cost' > <th> Total </th>  <td>                  </td>  <td id='totalCost'> </td> </tr>
+          </table> 
 
         4. <span>Set Temperature</span> 
-        <input id="temperature" type="number" value="0.2" min="0" max="1" > <span> to between 0 and 2.</span> <br>
+          <input id="temperature" type="number" value="0.2" min="0" max="1" > <span> to between 0 and 2.</span> <br>
 
         5. Set chunk size <input type="range" id="chunkSize" min="250" max="10000" step="250" value="500"
                onchange="saveContext( 'chunkSize', this.value )" > <span id="chunkSizeValue" > 500 </span> Chunk Size <br> 
        
         6. Pick <select id="chunkSeparator" onchange="saveContext( 'chunkSeparator', this.value )" >
-          <option value="\n"            > New line    </option>
-          <option value="\n\r" selected > 2 New lines </option>
-          <option value=" "             > Space       </option>
-          <option value=". "            > Period      </option>
-          <option value="# "            > # (markdown)</option> 
-          <option value="## "           > ##          </option> 
-          <option value="### "          > ###         </option>   
-          <option value="--- "          > Page        </option>        
-        </select> Chunk Separator <br>
+            <option value="\n"            > New line    </option>
+            <option value="\n\r" selected > 2 New lines </option>
+            <option value=" "             > Space       </option>
+            <option value=". "            > Period      </option>
+            <option value="# "            > # (markdown)</option> 
+            <option value="## "           > ##          </option> 
+            <option value="### "          > ###         </option>   
+            <option value="--- "          > Page        </option>        
+          </select> Chunk Separator <br>
 
-        7. Enable <input type="checkbox" id="isMarkChunk" onchange="saveContext('isMarkChunk', this.value )" > Mark Output Chunks <br>
-        8. If all else fails: Click  <i class='fas fa-info' onclick="toggle( '#help'     )" > </i> For help or <button onclick='removeLocalStorage()' >Reset App</button>
-        <!-- span> Cost: </span --> 
+        7. Enable <input type="checkbox" id="isMarkChunk" onchange="saveContext('isMarkChunk', this.value )" >
+          Mark Output Chunks <br>
+        8. If all else fails: Click 
+          <i class='fas fa-info' onclick="toggle( '#help'     )" > </i>
+          For help or <button onclick='removeLocalStorage()' >Reset App</button>
       </div>
     </div>
     
@@ -197,12 +201,12 @@
           <tr class="hdr" >
             <th> <h3 id="logheader" class="title" > Simplify Log  <span id='logTime'> </span> </h3> </th>
             <th style="text-align: right;" > 
-              <span class='botm' >
+              <span data-text='Keep scrolling to bottom' class='botm tooltip' >
                 <input type='checkbox' name='bottomFeeder' onclick='setBottom();' >
                 <i class='fa fa-fast-forward btn-icon'> </i>
               </span>
-              <i class='fa fa-trash' onclick='clearLog();' > </i> 
-              <i class='fas fa-window-close' onclick="toggle( '#log' )"       ></i> 
+              <span data-text='Clear this log session' class='tooltip'> <i class='fa fa-trash'         onclick='clearLog();'      > </i>  </span>
+              <span data-text='Close this window'      class='tooltip'> <i class='fas fa-window-close' onclick="toggle( '#log' )" > </i>  </span>
             </th>
           </tr>
         </tbody>
@@ -257,8 +261,8 @@
           <tr class='hdr'>
             <th> <h3 id="diffheader" class="title" > Difference of 2 buffers </h3> </th>
             <th style="text-align: right;"> 
-              <button onclick='doDiff()'> Diff </button>
-              <i class='fas fa-window-close' onclick="toggle( '#diff' )"       ></i> 
+              <span data-text='Generate difference view' class='tooltip' ><button onclick='diffBuffers()'> Diff </button> </span>
+              <span data-text='Close this window'        class='tooltip' > <i class='fas fa-window-close' onclick="toggle( '#diff' )"       ></i> </span>
             </th>
           </tr>
         </body>
@@ -267,19 +271,54 @@
         <!--div class="card" -->
           <div class="row">
             <div class="col">
-              <h4>Document with changes</h4>
+              <span> Document with changes 
+                <select id='changedBuffer' style='width: 10em;' >
+                  <option value='sourceText'  > Source Text      </option>   
+                  <option value='thisChunk'   > Current Chunk    </option> 
+                  <option value='simpleChunk' > Simplified Chunk </option> 
+                  <option value='target'      > Combined Text    </option> 
+                  <option value='b0'          > Buffer 1         </option> 
+                  <option value='b1'          > Buffer 2         </option> 
+                  <option value='b2'          > Buffer 3         </option> 
+                  <option value='b3'          > Buffer 4         </option> 
+                  <option value='b4'          > Buffer 5         </option> 
+                  <option value='b5'          > Buffer 6         </option> 
+                  <option value='b6'          > Buffer 7         </option> 
+                  <option value='b7'          > Buffer 8         </option> 
+                  <option value='b8'          > Buffer 9         </option> 
+                  <option value='b9'          > Buffer 10        </option>
+                </select>
+                <hr>
+              </span>
               <div class="card current-document" id="output"></div>
             </div>
             <div class="col">
-              <h4>Original Document</h4>
-              <div class="card system-generated" id="outputNew"></div>
+              <span>Original Document 
+                <select id='orgBuffer' style='width: 10em;' >
+                  <option value='sourceText'  > Source Text      </option>   
+                  <option value='thisChunk'   > Current Chunk    </option> 
+                  <option value='simpleChunk' > Simplified Chunk </option> 
+                  <option value='target'      > Combined Text    </option> 
+                  <option value='b0'          > Buffer 1         </option> 
+                  <option value='b1'          > Buffer 2         </option> 
+                  <option value='b2'          > Buffer 3         </option> 
+                  <option value='b3'          > Buffer 4         </option> 
+                  <option value='b4'          > Buffer 5         </option> 
+                  <option value='b5'          > Buffer 6         </option> 
+                  <option value='b6'          > Buffer 7         </option> 
+                  <option value='b7'          > Buffer 8         </option> 
+                  <option value='b8'          > Buffer 9         </option> 
+                  <option value='b9'          > Buffer 10        </option>
+                </select>
+                <hr>
+               </span>
+               <div class="card system-generated" id="outputNew"></div>
             </div>
           </div>
         <!-- /div -->
       </div>
     </div>
 
-    
     <div id="help"     class="helpPage dragable" >
       <table width="100%" >
         <tbody>
