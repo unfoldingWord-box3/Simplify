@@ -350,11 +350,11 @@
                         <li> Allows selection of model from plan </li>
                         <li> Recovers after completing a document </li>   
                         <li> Supports redo Chunk </li>
+                        <li> Supports "diffing" 2 buffers </li>
                       </ol>
                     </li>
                     <li> TBDs
-                      <ol> 
-                        <li> Show diff from original (content COP) </li>   
+                      <ol>  
                         <li> Traverse a file system for content to apply a prompt or set of prompts (Content COP)</li>   
                         <li> Use a template to reformat content (Content COP)</li> 
                         <li> Backup to previous context </li>
@@ -423,6 +423,7 @@
                              If this should get corrupt, then this will help to flush out any corrupted data (along with all the good data.)
                              Before resetting, save any buffers or configuration settings in a scratch file so that you can easily restore them. </li>
                       </ol>
+
                     <li> Prepare Text </li>
                       <ol>
                         <li> Open a document to be processed.</li>
@@ -434,6 +435,7 @@
                         <li> You can copy any prompt from the Previous Prompts control and paste it into the Repeating Context Control. 
                              You can also ammend or write your own.</li>
                       </ol>  
+
                     <li> Simplify </li>
                       <ol>
                         <li> Click one of the modes: "Play"  <i class='fas fa-play' > </i>,  or
@@ -458,7 +460,20 @@
                                  application will reprocess the same chunk presumably after you tweaked the original or the prompt.</li>
                             <!-- li> </li -->
                           </ul>
-                      </ol>  
+                      </ol>
+                      
+                    <li> Comparison
+                      <ol>
+                        <li> This feature allows you to compare any 2 buffers. Use this to see what is different from one process to another </li>
+                        <li> To compare two buffers click the <i class='fas fa-clone' > </i> to display the Diff dialog. </li>
+                        <li> Select two buffers to compare </li>
+                        <li> Click the "Diff" button </li>
+                        <li> You will see in the right window the unchanged text. </li>
+                        <li> You will see in the left window the changes made to the text. Added text is highlighted in green. 
+                             Removed text is highlighted in red with an overstrike through the text </li>
+                      </ol> 
+                    </li>
+                      
                     <li> Refine
                       <ol>
                         <li> You can copy the simplified or combined  text back into the source text and select another prompt. 
@@ -466,19 +481,22 @@
                         <li> You can cut parts of the buffered original and reprocess it. </li>
                       </ol> 
                     </li>
+                    
                     <li> Harvest 
                       <ol>
                         <li> If you especially like one of your own prompts, you can paste it into the Previous Prompts control for later reuse. </li>
                         <li> Cut the Target control and paste it into a new file named similar to original. </li>
                       </ol>
                     </li>
-                    <li> Persistance 
+
+                    <li> Persistence 
                       <ul> 
                         <li> The application attempts to save your text in your local storage any time you edit something. 
                              If you restart the app it will recall it from local storage.
                              Don't trust it for permanent storage as browser may reclaim space by removing your local storage. </li>
                       </ul>
                     </li>
+
                     <li> Cost 
                       <ul> 
                         <li> The Chatbot API is not free. 
@@ -487,6 +505,7 @@
                              Once you get acceptable results you should save the prompt for future use to minimize cost. </li>
                       </ul>
                     </li>
+
                     <li> Troubleshooting 
                       <p> Sometimes things don't go as you plan. This section attempts to help when things go wrong. </p>
                       <ul> 
