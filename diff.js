@@ -586,12 +586,22 @@ let newHTML = `<p class="bold">
 
 // Diff HTML strings
 
-function doDiff() {
-  let output = htmldiff(originalHTML, newHTML);
-  let input = htmldiff(newHTML, originalHTML);
+function diffBuffers() {
+  var orgTextBuffer = $( '#orgBuffer' ).find( ":selected" ).val();
+  var orgTxt =  $( `#${orgTextBuffer}` ).val();
+//var orgTxt = originalHTML;
+
+  var changedTextBuffer = $( '#changedBuffer' ).find( ":selected" ).val();
+  var newTxt = $( `#${changedTextBuffer}` ).val();
+//var newTxt = newHTML;
+  doDiff( orgTxt, newTxt );
+}
+
+function doDiff( orgTxt, newTxt ) {
+  let output = htmldiff( orgTxt, newTxt );
+  let input = htmldiff(  newTxt, orgTxt );
 
 // Show HTML diff output as HTML!
-  document.getElementById("output").innerHTML = output;
-//document.getElementById("outputOriginal").innerHTML = originalHTML;
-  document.getElementById("outputNew").innerHTML = input;
+  document.getElementById( "output" ).innerHTML = output;
+  document.getElementById( "outputNew" ).innerHTML = input;
 }
