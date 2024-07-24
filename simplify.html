@@ -2,11 +2,15 @@
 <html> 
   <head>
     <meta charset='utf-8' >
+
     <link rel="stylesheet" href="./simplify.css" />  
+    <link rel="stylesheet" href="./diff.css"     />
+
     <script src="./jquery-3.5.1.min.js" > </script>
     <script src="./font.js"             > </script>
     <script src="./drag.js"             > </script>
-    <script src="./log.js"             > </script>
+    <script src="./log.js"              > </script>
+    <script src="./diff.js"             > </script>
     <!-- script src="./indexedDbV2.js"      > </script -->
     <script src="./simplify.js"         > </script>
     <title> Simplify </title>
@@ -18,9 +22,10 @@
           <tr>
             <td> <h3 class="title" > Simplify </h3></td>
             <td style="text-align: right;" > 
-              <i class='fas fa-list' onclick="toggle( '#log'      )" > </i> 
-              <i class='fas fa-cog'  onclick="toggle( '#settings' )" > </i> 
-              <i class='fas fa-info' onclick="toggle( '#help'     )" > </i> 
+              <!-- i class='fas fa-clone'     onclick="toggle( '#diff'     )" > </i --> 
+              <i class='fas fa-list'      onclick="toggle( '#log'      )" > </i> 
+              <i class='fas fa-cog'       onclick="toggle( '#settings' )" > </i> 
+              <i class='fas fa-info'      onclick="toggle( '#help'     )" > </i> 
             </td>
           </tr>
         </tbody>
@@ -28,7 +33,7 @@
     </header>
     
     <div id="config" > 
-      <span id="config-title"> Configuration </span> <input name='configed' type='checkbox' onclick='toggle("#conf")' checked > <br>
+      <span id="config-title"> Getting Started: Configuration </span> (<input name='configed' type='checkbox' onclick='toggle("#conf")' checked > hide) <br>
       <div id='conf'>
         1. <button onclick="setKey()">    Set API Key </button> 
         Set up an OpenAI account then enter key here. <br>
@@ -37,16 +42,13 @@
         <select id="model" onchange="saveContext( 'model', this.value )" >
         </select> <br>
         3. Periodically, examine cost of model against current "Source Text":<br> 
-        <table>
-          <tr> <td>       </td>  <td>Tokens            </td>  <td>Cost($)          </td> </tr>
-          <tr> <td> Input </td>  <td id='inputTokens'> </td>  <td id='inputCost'> </td> </tr>
-          <tr> <td> Output</td>  <td id='outputTokens'></td>  <td id='outputCost'></td> </tr>
-          <tr> <td> Total </td>  <td>                  </td>  <td id='totalCost'> </td> </tr>
+        <table class='cost'>
+          <tr c/lass='cost' > <td>       </td>  <th>Tokens            </th>  <th>Cost($)          </th> </tr>
+          <tr c/lass='cost' > <th> Input </th>  <td id='inputTokens'> </td>  <td id='inputCost'> </td> </tr>
+          <tr c/lass='cost' > <th> Output</th>  <td id='outputTokens'></td>  <td id='outputCost'></td> </tr>
+          <tr c/lass='cost' > <th> Total </th>  <td>                  </td>  <td id='totalCost'> </td> </tr>
         </table> 
-<!--        &nbsp; &nbsp; <span> Input of: </span> <span id='inputTokens'   > </span> <span> tokens.  Cost: $</span> <span id='inputCost'  >0.0</span> <br>
-        &nbsp; &nbsp; <span> Output of: </span> <span id='outputTokens' > </span> <span> tokens.  Cost: $</span> <span id='outputCost' >0.0</span> <br>
-        &nbsp; &nbsp; <span> Total Cost: </span> <span id='totalCost' > </span><br>
- -->
+
         4. <span>Set Temperature</span> 
         <input id="temperature" type="number" value="0.2" min="0" max="1" > <span> to between 0 and 2.</span> <br>
 
@@ -65,7 +67,7 @@
         </select> Chunk Separator <br>
 
         7. Enable <input type="checkbox" id="isMarkChunk" onchange="saveContext('isMarkChunk', this.value )" > Mark Output Chunks <br>
-        8. If all else fails: <button onclick='removeLocalStorage()' >Reset App</button>
+        8. If all else fails: Click  <i class='fas fa-info' onclick="toggle( '#help'     )" > </i> For help or <button onclick='removeLocalStorage()' >Reset App</button>
         <!-- span> Cost: </span --> 
       </div>
     </div>
@@ -94,13 +96,13 @@
         <button onclick="cancel()"   id="cancel"  title="Cancel this pass"    > <i class='fas fa-eject'        > </i> </button>
       </div> <br> <br>
       <div class='flxrow'>
-        <div class="col blk sidebyside">
+        <div class="cols blk sidebyside">
           <h3> Current Chunk <span id="chunkNumber" ></span></h3>   
           <textarea id="thisChunk" class="textBox resizable" 
                     onchange="saveContext( 'thisChunk', this.value )" 
                     onmouseup="$( '#simpleChunk' ).height( $( '#thisChunk' ).height() );"></textarea> <br>
         </div> 
-        <div class="col blk sidebyside"> 
+        <div class="cols blk sidebyside"> 
           <h3> Simplified Chunk <span id="simplifiedNumber" ></span> </h3>   
           <textarea id="simpleChunk" class="textBox resizable" 
                     onchange="saveContext( 'simpleChunk', this.value )"
@@ -248,212 +250,244 @@
         </table>  
       </div>        
     </div>        
+
+    <div id="diff"     class="diffPage dragable" >
+      <table width="100%" >
+        <tbody>
+          <tr class='hdr'>
+            <th> <h3 id="diffheader" class="title" > Difference of 2 buffers </h3> </th>
+            <th style="text-align: right;"> 
+              <button onclick='doDiff()'> Diff </button>
+              <i class='fas fa-window-close' onclick="toggle( '#diff' )"       ></i> 
+            </th>
+          </tr>
+        </body>
+      </table>
+      <div class='diffBody'>
+        <!--div class="card" -->
+          <div class="row">
+            <div class="col">
+              <h4>Document with changes</h4>
+              <div class="card current-document" id="output"></div>
+            </div>
+            <div class="col">
+              <h4>Original Document</h4>
+              <div class="card system-generated" id="outputNew"></div>
+            </div>
+          </div>
+        <!-- /div -->
+      </div>
+    </div>
+
     
     <div id="help"     class="helpPage dragable" >
-      <table width="100%">
-        <thead>
-          <tr class="hdr" >
+      <table width="100%" >
+        <tbody>
+          <tr class='hdr'>
             <th> <h3 id="helpheader" class="title" > Simplify Information </h3> </th>
             <th style="text-align: right;" > 
               <i class='fas fa-window-close' onclick="toggle( '#help' )"       ></i> 
             </th>
           </tr>
-        </thead>
-        <tbody>        
-          <tr>
-            <td colspan=2 > 
-              <p> The following are features and deficiencies of the current POC
-                <ul>
-                  <li> Features
-                    <ol>
-                      <li> Save previous Prompts </li>
-                      <li> Split doc into specified max word size Chunks 500 - 3000 </li>
-                      <li> Separate chunks on new lines, spaces 1-3 level heading </li>
-                      <li> Save multiple buffers of intermediate results </li>
-                      <li> Mark chunk boundaries on Output </li>
-                      <li> Process complete files </li>    
-                      <li> Enable single step </li>
-                      <li> Manage buffers to retain intermediate results. </li> 
-                      <li> Allows selection of model from plan </li>
-                      <li> Recovers after completing a document </li>   
-                      <li> Supports redo Chunk </li>
-                    </ol>
-                  </li>
-                  <li> TBDs
-                    <ol> 
-                      <li> Show diff from original (content COP) </li>   
-                      <li> Traverse a file system for content to apply a prompt or set of prompts (Content COP)</li>   
-                      <li> Use a template to reformat content (Content COP)</li> 
-                      <li> Backup to previous context </li>
-                      <li> Only wait as necessary
-                      <li> Rotate through notion [doc]s folder </li>
-                      <li> Save to [doc]-simplified.md </li>
-                      <li> Separate on page break </li>
-                      <li> Convert to Claude free version </li>
-                      <li> Add pipeline section like DSPy </li>
-                      <li> Show all buffer sizes </li>
-                      <li> remember dragable positions and sizes </li>
-                    </ol>   
-                  </li>
-                </ul>
-              </p>                 
-              <p>To use this application:
-                <ul>
-                  <li> Configure the application </li>
-                    <ol>
-                      <li> Configure the application by getting an API Key. This involves setting up an OpenAI API Account. 
-                           There are two types of accounts. This app uses the API to access chatgpt.
-                        <ol>
-                          <li> Create openAi account 
-                            <ol>
-                              <li> Navigate to `openAi.com` </li> 
-                              <li> Click Products </li> 
-                              <li> Click API Login </li> 
-                              <li> Click API </li> 
-                            </ol>
-                          </li> 
-                          <li> Get API key (not free)    
-                            <ol>
-                              <li> Navigate to `openAi.com` </li> 
-                              <li> Click Products </li> 
-                              <li> Click API Login </li> 
-                              <li> Click API </li> 
-                              <li> Click API Keys </li> 
-                              <li> Click Generate new secret key </li> 
-                              <li>  </li> 
-                            </ol> 
-                          </li> 
-                          <li> Click "Set API Key" in Simplify App. </li> 
-                          <li> Wait for monthly statement. </li> 
-                        </ol>
-                      </li>
-                      <li> Select an OpenAi model to use. 
-                           There are various models for different purposes. 
-                           The default of gpt-3.5-turbo has been tested with this app. 
-                           The list is constructed from what is available on your plan.
-
-We generally recommend that developers use either GPT-4o or GPT-3.5 Turbo, depending on the complexity of your tasks. 
-GPT-4o generally performs better on a wide range of tasks, while GPT-3.5 Turbo is fast and inexpensive for simpler tasks. 
-
-                           Models known to not be currently suitable are suppressed in the dropdown list. </li> 
-                      <li> Periodically, examine cost of input text. this changes per model and size of text to process. </li>
-                      <li> Select a temperature for responses. 
-                           The value range is 0-2. 
-                           Lower values indicating greater determinism and higher values indicating more randomness. 
-                           When the temperature is set to a lower value, the probability distribution of tokens becomes narrower and taller. 
-                           Higher values means the results may be more creative and less reproducible. </li>
-                      <li> Set the chunk size. To determine the actual chunk size the application will first take the "chunk size" number of words 
-                           then back up to previous chunk separator. </li>
-                      <li> Select a chunk separator. 
-                           If the separator does not exist in a particular chunk then the entire chunk is used. </li>
-                      <li> At any time you can check the mark Output Chinks to have --- n --- separate each chunk in the output. </li>
-                      <li> When all else fails, Reset the app. Restarting the app uses cached data in browsers localstorage. 
-                           If this should get corrupt, then this will help to flush out any corrupted data (along with all the good data.)
-                           Before resetting, save any buffers or configuration settings in a scratch file so that you can easily restore them. </li>
-                    </ol>
-                  <li> Prepare Text </li>
-                    <ol>
-                      <li> Open a document to be processed.</li>
-                      <li> First copy the source text into one of the bufers and call it something like "original" </li>
-                      <li> Copy contents to paste buffer (CTRL-A CTRL-C) </li>
-                      <li> Paste in Source text control (CTRL-V). 
-                           You can directly type into source control or edit what you paste. 
-                           You can resize the control by dragging from the lower right hand corner. </li>
-                      <li> You can copy any prompt from the Previous Prompts control and paste it into the Repeating Context Control. 
-                           You can also ammend or write your own.</li>
-                    </ol>  
-                  <li> Simplify </li>
-                    <ol>
-                      <li> Click one of the modes: "Play"  <i class='fas fa-play' > </i>,  or
-                                                   "Next"  <i class='fas fa-step-forward' > </i>                                      
-                                                    </li>
-                      <li> You will see the source broken into chunks based on the chunk size control. 
-                           This takes the number of words then backs up to previous chunk separator. </li>
-                      <li> As chunks are split from source, they are placed in Current Chunk control with the number of the current chunk. </li>
-                      <li> The application will send the chunk to chap-gpt for processing. </li>
-                      <li> Upon completion of the chunk, the application will place the processed text into the "Simplified Chunk Control. </li>
-                      <li> Depending on the mode one of the following will happen: </li>
-                        <ul>
-                          <li> If you had pressed "Play" <i class='fas fa-play' > </i> then the Simplified chunk will be added to the end of the 
-                               "Combined Simplified Text." 
-                               Then the application will process the next chunk until completion or, </li>
-                            <ul>
-                              <li> You click pause <i class='fas fa-pause' > </i> and the application will enter single step mode at end of current chunk. </li>
-                            </ul>
-                          <li> If you then click "Next"<i class='fas fa-step-forward' > </i> the application will process one chunk. 
-                               It will not place result in Combined control until you press next again. This allows reprocessing a chunk. </li>
-                          <li> If you press redo <i class='fas fa-redo' > </i> instead of Next, 
-                               application will reprocess the same chunk presumably after you tweaked the original or the prompt.</li>
-                          <!-- li> </li -->
-                        </ul>
-                    </ol>  
-                  <li> Refine
-                    <ol>
-                      <li> You can copy the simplified or combined  text back into the source text and select another prompt. 
-                           For example you could refine the simplification like changing tone or translate to another language. </li>
-                      <li> You can cut parts of the buffered original and reprocess it. </li>
-                    </ol> 
-                  </li>
-                  <li> Harvest 
-                    <ol>
-                      <li> If you especially like one of your own prompts, you can paste it into the Previous Prompts control for later reuse. </li>
-                      <li> Cut the Target control and paste it into a new file named similar to original. </li>
-                    </ol>
-                  </li>
-                  <li> Persistance 
-                    <ul> 
-                      <li> The application attempts to save your text in your local storage any time you edit something. 
-                           If you restart the app it will recall it from local storage.
-                           Don't trust it for permanent storage as browser may reclaim space by removing your local storage. </li>
-                    </ul>
-                  </li>
-                  <li> Cost 
-                    <ul> 
-                      <li> The Chatbot API is not free. 
-                           It is generally a few cents per document depending on how many times you reprocess it with different prompts. 
-                           You can open your account and click on Usage to see your monthly bill. 
-                           Once you get acceptable results you should save the prompt for future use to minimize cost. </li>
-                    </ul>
-                  </li>
-                  <li> Troubleshooting 
-                    <p> Sometimes things don't go as you plan. This section attempts to help when things go wrong. </p>
-                    <ul> 
-                      <li> There is a status indicator below the "Enter Source Text" area. 
-                           This will flash problems as they occur or indicate the current state of the app.
-                           Sometimes the information "flies by" too quickly. </li>
-                      <li> The log <i class='fa fa-list'></i> captures most activities during a session. You can display this to see more of what has happened. </li>
-                      <li> You can clear the log by clicking the trash can <i class='fa fa-trash'></i> icon. </li>
-                      <li> You can make the log display in real time by checking the box before the fast forward <i class='fa fa-fast-forward'></i> can icon. </li>icon. </li>
-                      <li> Finally contact the training department at unfoldingWord for further support information.</li>
-                      <li> <em>Some response codes you may see</em>
-                        <table>
-                          <tbody>
-                            <tr><td> 200</td><td> Success                                      </td></tr>
-                            <tr><td> 400</td><td> Invalid request (invalid api key, bad model) </td></tr>
-                            <tr><td> 401</td><td> Unauthorized error, which indicates that 
-                                                  authentication is required and has failed 
-                                                  or has not yet been provided                 </td></tr>
-                            <tr><td> 403</td><td> Forbidden error specifically indicates that 
-                                                  the request is understood but the server is 
-                                                  refusing to fulfill it. Could be restricted 
-                                                  by permissions,IP, rate limiting.            </td></tr>
-                            <tr><td> 429</td><td> Too many requests, credit expired before 
-                                                  12/22 ($18) tokens expired ($5), free 
-                                                  account time (3mo) expired, multiple 
-                                                  accounts on same phone number                </td></tr>
-                            <tr><td> 500</td><td> System Error                                 </td></tr>
-                            <tr><td> 503</td><td> System Overloaded.                           </td></tr>
-                          </tbody>
-                        </table>
-                      </li>  
-                    </ul>
-                  </li>
-                </ol>
-              </p>
-            </td>
-          </tr>
-        </tbody>
+        </body>
       </table>
+      <div class='logBody'>
+        <table class='helpRows' > 
+          <tbody sticky>        
+            <tr>
+              <td colspan=2 > 
+                <p> The following are features and deficiencies of the current POC
+                  <ul>
+                    <li> Features
+                      <ol>
+                        <li> Save previous Prompts </li>
+                        <li> Split doc into specified max word size Chunks 500 - 3000 </li>
+                        <li> Separate chunks on new lines, spaces 1-3 level heading </li>
+                        <li> Save multiple buffers of intermediate results </li>
+                        <li> Mark chunk boundaries on Output </li>
+                        <li> Process complete files </li>    
+                        <li> Enable single step </li>
+                        <li> Manage buffers to retain intermediate results. </li> 
+                        <li> Allows selection of model from plan </li>
+                        <li> Recovers after completing a document </li>   
+                        <li> Supports redo Chunk </li>
+                      </ol>
+                    </li>
+                    <li> TBDs
+                      <ol> 
+                        <li> Show diff from original (content COP) </li>   
+                        <li> Traverse a file system for content to apply a prompt or set of prompts (Content COP)</li>   
+                        <li> Use a template to reformat content (Content COP)</li> 
+                        <li> Backup to previous context </li>
+                        <li> Only wait as necessary
+                        <li> Rotate through notion [doc]s folder </li>
+                        <li> Save to [doc]-simplified.md </li>
+                        <li> Separate on page break </li>
+                        <li> Convert to Claude free version </li>
+                        <li> Add pipeline section like DSPy </li>
+                        <li> Show all buffer sizes </li>
+                      </ol>   
+                    </li>
+                  </ul>
+                </p>                 
+                <p>To use this application:
+                  <ul>
+                    <li> Configure the application </li>
+                      <ol>
+                        <li> Configure the application by getting an API Key. This involves setting up an OpenAI API Account. 
+                             There are two types of accounts. This app uses the API to access chatgpt.
+                          <ol>
+                            <li> Create openAi account 
+                              <ol>
+                                <li> Navigate to `openAi.com` </li> 
+                                <li> Click Products </li> 
+                                <li> Click API Login </li> 
+                                <li> Click API </li> 
+                              </ol>
+                            </li> 
+                            <li> Get API key (not free)    
+                              <ol>
+                                <li> Navigate to `openAi.com` </li> 
+                                <li> Click Products </li> 
+                                <li> Click API Login </li> 
+                                <li> Click API </li> 
+                                <li> Click API Keys </li> 
+                                <li> Click Generate new secret key </li> 
+                                <li>  </li> 
+                              </ol> 
+                            </li> 
+                            <li> Click "Set API Key" in Simplify App. </li> 
+                            <li> Wait for monthly statement. </li> 
+                          </ol>
+                        </li>
+                        <li> Select an OpenAi model to use. 
+                             There are various models for different purposes. 
+                             The default of gpt-3.5-turbo has been tested with this app. 
+                             The list is constructed from what is available on your plan.
+  
+  We generally recommend that developers use either GPT-4o or GPT-3.5 Turbo, depending on the complexity of your tasks. 
+  GPT-4o generally performs better on a wide range of tasks, while GPT-3.5 Turbo is fast and inexpensive for simpler tasks. 
+  
+                             Models known to not be currently suitable are suppressed in the dropdown list. </li> 
+                        <li> Periodically, examine cost of input text. this changes per model and size of text to process. </li>
+                        <li> Select a temperature for responses. 
+                             The value range is 0-2. 
+                             Lower values indicating greater determinism and higher values indicating more randomness. 
+                             When the temperature is set to a lower value, the probability distribution of tokens becomes narrower and taller. 
+                             Higher values means the results may be more creative and less reproducible. </li>
+                        <li> Set the chunk size. To determine the actual chunk size the application will first take the "chunk size" number of words 
+                             then back up to previous chunk separator. </li>
+                        <li> Select a chunk separator. 
+                             If the separator does not exist in a particular chunk then the entire chunk is used. </li>
+                        <li> At any time you can check the mark Output Chinks to have --- n --- separate each chunk in the output. </li>
+                        <li> When all else fails, Reset the app. Restarting the app uses cached data in browsers localstorage. 
+                             If this should get corrupt, then this will help to flush out any corrupted data (along with all the good data.)
+                             Before resetting, save any buffers or configuration settings in a scratch file so that you can easily restore them. </li>
+                      </ol>
+                    <li> Prepare Text </li>
+                      <ol>
+                        <li> Open a document to be processed.</li>
+                        <li> First copy the source text into one of the bufers and call it something like "original" </li>
+                        <li> Copy contents to paste buffer (CTRL-A CTRL-C) </li>
+                        <li> Paste in Source text control (CTRL-V). 
+                             You can directly type into source control or edit what you paste. 
+                             You can resize the control by dragging from the lower right hand corner. </li>
+                        <li> You can copy any prompt from the Previous Prompts control and paste it into the Repeating Context Control. 
+                             You can also ammend or write your own.</li>
+                      </ol>  
+                    <li> Simplify </li>
+                      <ol>
+                        <li> Click one of the modes: "Play"  <i class='fas fa-play' > </i>,  or
+                                                     "Next"  <i class='fas fa-step-forward' > </i>                                      
+                                                      </li>
+                        <li> You will see the source broken into chunks based on the chunk size control. 
+                             This takes the number of words then backs up to previous chunk separator. </li>
+                        <li> As chunks are split from source, they are placed in Current Chunk control with the number of the current chunk. </li>
+                        <li> The application will send the chunk to chap-gpt for processing. </li>
+                        <li> Upon completion of the chunk, the application will place the processed text into the "Simplified Chunk Control. </li>
+                        <li> Depending on the mode one of the following will happen: </li>
+                          <ul>
+                            <li> If you had pressed "Play" <i class='fas fa-play' > </i> then the Simplified chunk will be added to the end of the 
+                                 "Combined Simplified Text." 
+                                 Then the application will process the next chunk until completion or, </li>
+                              <ul>
+                                <li> You click pause <i class='fas fa-pause' > </i> and the application will enter single step mode at end of current chunk. </li>
+                              </ul>
+                            <li> If you then click "Next"<i class='fas fa-step-forward' > </i> the application will process one chunk. 
+                                 It will not place result in Combined control until you press next again. This allows reprocessing a chunk. </li>
+                            <li> If you press redo <i class='fas fa-redo' > </i> instead of Next, 
+                                 application will reprocess the same chunk presumably after you tweaked the original or the prompt.</li>
+                            <!-- li> </li -->
+                          </ul>
+                      </ol>  
+                    <li> Refine
+                      <ol>
+                        <li> You can copy the simplified or combined  text back into the source text and select another prompt. 
+                             For example you could refine the simplification like changing tone or translate to another language. </li>
+                        <li> You can cut parts of the buffered original and reprocess it. </li>
+                      </ol> 
+                    </li>
+                    <li> Harvest 
+                      <ol>
+                        <li> If you especially like one of your own prompts, you can paste it into the Previous Prompts control for later reuse. </li>
+                        <li> Cut the Target control and paste it into a new file named similar to original. </li>
+                      </ol>
+                    </li>
+                    <li> Persistance 
+                      <ul> 
+                        <li> The application attempts to save your text in your local storage any time you edit something. 
+                             If you restart the app it will recall it from local storage.
+                             Don't trust it for permanent storage as browser may reclaim space by removing your local storage. </li>
+                      </ul>
+                    </li>
+                    <li> Cost 
+                      <ul> 
+                        <li> The Chatbot API is not free. 
+                             It is generally a few cents per document depending on how many times you reprocess it with different prompts. 
+                             You can open your account and click on Usage to see your monthly bill. 
+                             Once you get acceptable results you should save the prompt for future use to minimize cost. </li>
+                      </ul>
+                    </li>
+                    <li> Troubleshooting 
+                      <p> Sometimes things don't go as you plan. This section attempts to help when things go wrong. </p>
+                      <ul> 
+                        <li> There is a status indicator below the "Enter Source Text" area. 
+                             This will flash problems as they occur or indicate the current state of the app.
+                             Sometimes the information "flies by" too quickly. </li>
+                        <li> The log <i class='fa fa-list'></i> captures most activities during a session. You can display this to see more of what has happened. </li>
+                        <li> You can clear the log by clicking the trash can <i class='fa fa-trash'></i> icon. </li>
+                        <li> You can make the log display in real time by checking the box before the fast forward <i class='fa fa-fast-forward'></i> can icon. </li>icon. </li>
+                        <li> Finally contact the training department at unfoldingWord for further support information.</li>
+                        <li> <em>Some response codes you may see</em>
+                          <table>
+                            <tbody>
+                              <tr><td> 200</td><td> Success                                      </td></tr>
+                              <tr><td> 400</td><td> Invalid request (invalid api key, bad model) </td></tr>
+                              <tr><td> 401</td><td> Unauthorized error, which indicates that 
+                                                    authentication is required and has failed 
+                                                    or has not yet been provided                 </td></tr>
+                              <tr><td> 403</td><td> Forbidden error specifically indicates that 
+                                                    the request is understood but the server is 
+                                                    refusing to fulfill it. Could be restricted 
+                                                    by permissions,IP, rate limiting.            </td></tr>
+                              <tr><td> 429</td><td> Too many requests, credit expired before 
+                                                    12/22 ($18) tokens expired ($5), free 
+                                                    account time (3mo) expired, multiple 
+                                                    accounts on same phone number                </td></tr>
+                              <tr><td> 500</td><td> System Error                                 </td></tr>
+                              <tr><td> 503</td><td> System Overloaded.                           </td></tr>
+                            </tbody>
+                          </table>
+                        </li>  
+                      </ul>
+                    </li>
+                  </ol>
+                </p>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
     </div>
   </body>
 </html>
