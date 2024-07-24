@@ -366,6 +366,7 @@
       document.getElementById( "model" ).innerHTML = validModels.join( "\n" );
       $( "#model" ).val( context.model ); // select default model
       initModels();
+      estimateCost();
       }
     )
     .catch( error => {
@@ -409,7 +410,7 @@
       var itm = this.value;
       var [row, id] = this.name.split( "-" );
       context.models[row][id] = itm;
-      saveContext();
+      estimateCost();
     } );
   }
 
