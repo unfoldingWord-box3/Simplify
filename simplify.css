@@ -30,11 +30,8 @@
 
   th {
     margin: 0;
-    p/adding: 5px;
     position: sticky;
     top: 0;
-    b/ackground: white;
-    b/order-bottom: thin solid grey;
   }
     
   .helpRows {
@@ -65,11 +62,7 @@
     margin: 0;
     padding-top: 0.7em;
   }
-    
-  .rest {
-    h/eight: calc( thisChunk.width );    
-  }
-  
+      
   .sidebyside {
     box-sizing: content-box;
     width: 48%;
@@ -84,13 +77,8 @@
     height:            75%;
   }
 
-  .diffBody {
-    d/isplay: flex;
-}
   .logPage, .settingsPage, .helpPage, .diffPage {
     position:         absolute;
-    l/eft:             25%;
-    t/op:              25%;
     width:            5.5in;
     background-color: white;
     border-radius:    4px;
@@ -181,7 +169,6 @@
   }
 
   .flxrow {
-    b/ox-sizing: content-box;
     display: flex;
     border: none;
   }
@@ -189,7 +176,6 @@
   .cols {
     flex: 1;
   }
-
 
   .bufferTitle {
     border: thin solid lightgrey;
@@ -239,7 +225,6 @@
     margin: 0;
     border: thin solid grey;
     background-color: white;
-    p/osition: absolute;
     overflow: auto;
     z-index: 1000;
     display: none;
@@ -251,9 +236,43 @@
   }
 
   .disabled-button {
-    pointer-events:  none;
     opacity:         0.4;
     cursor:          not-allowed;
     pointer-events:  none;
   }
   
+  i.fas {
+    cursor: default;
+  }
+  
+  i.fas:hover {
+    cursor: pointer;
+  }
+  
+  .tooltip {
+    position: relative;
+  }
+  
+  .tooltip:before {
+    content:     attr(data-text); /* here's the magic */
+    position:    absolute;
+    top:         120%;  /* vertically center */
+    transform:   translateY(-50%);
+    right:       100%;  /* move to left */
+    m/argin-left: 15px; /* and add a small left margin */
+  
+  /* basic styles */
+    width:         200px;
+    padding:       5px;
+    border-radius: 5px;
+    background:    #ddd;
+    color:         #000;
+    text-align:    center;
+    opacity:       95%;
+    z-index:       1050;
+    display:  none; /* hide by default */ 
+  }
+  
+  .tooltip:hover:before {
+    display: block;
+  }
