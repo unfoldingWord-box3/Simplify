@@ -15,23 +15,42 @@
     padding: 0;
   }
   
+  .stk {
+    background-color: lightgrey;
+  }
+
+  .cost {
+    border: thin solid lightgrey;
+    width: 3in;
+  }
+
+  table.cost td {
+    border: thin solid lightgrey;
+  }
+
   th {
     margin: 0;
-    padding: 5px;
+    p/adding: 5px;
     position: sticky;
     top: 0;
-    background: white;
-    border-bottom: thin solid grey;
+    b/ackground: white;
+    b/order-bottom: thin solid grey;
   }
     
+  .helpRows {
+    background-color: white;
+    overflow: scroll;
+  }
+
   h3 {
     margin: 0;
   }
     
   .blk {
     position: relative;
-    float: left;
+    f/loat: left;
     padding-right: 10px;
+    border:none
   }
   
   .edt {
@@ -54,29 +73,31 @@
   .sidebyside {
     box-sizing: content-box;
     width: 48%;
+    border: none;
   }
 
-  .logBody, .helpBody, .settingsBody {
+  .logBody, .helpBody, .settingsBody, .diffBody {
     position:          relative;
     display:           block;
     border:            none;
     overflow:          auto;
     height:            75%;
-    p/adding-bottom: 20px;
-    m/argin-bottom: 10px;
   }
 
-  .logPage, .settingsPage {
+  .diffBody {
+    d/isplay: flex;
+}
+  .logPage, .settingsPage, .helpPage, .diffPage {
     position:         absolute;
-    left:             25%;
-    top:              25%;
+    l/eft:             25%;
+    t/op:              25%;
     width:            5.5in;
     background-color: white;
     border-radius:    4px;
     display:          none;
     max-height:       8in;
     overflow:         hidden;
-    scroll: none;
+    scroll:           none;
     padding-bottom:   30px;
   }
   
@@ -139,8 +160,8 @@
     resize:           both;
   }
 
-  .settingsPage { width: 5in; }
-  .logPage {      width: 6in; }
+  .settingsPage { w/idth: 5in; }
+  .logPage {      w/idth: 6in; }
 
   .hdr {
     border-bottom: thin solid grey;
@@ -159,15 +180,16 @@
     margin: 2px;
   }
 
-/*  .flxrow {
-    box-sizing: content-box;
+  .flxrow {
+    b/ox-sizing: content-box;
     display: flex;
+    border: none;
   }
 
-  .col {
+  .cols {
     flex: 1;
   }
-*/
+
 
   .bufferTitle {
     border: thin solid lightgrey;
@@ -198,7 +220,7 @@
   }
 
   #config {
-    border: thin solid darkgrey;
+    border: thin solid lightgrey;
     background-color: #eee;
     padding: 7px;
   }
