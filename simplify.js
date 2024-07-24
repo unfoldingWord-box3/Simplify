@@ -1,5 +1,5 @@
 
-  let defaultContext = {
+  let defaultContext = { // defaults for all global variables replaced by local storage as changed
     repeatingContext: "",  repeatingContextHeight: "1em",
     previousPrompts:  "",  previousPromptsHeight:  "2em",
     sourceText:       "",  sourceTextHeight:       "6em",
@@ -45,57 +45,61 @@
     bufferToggle9:    true,
     logItems:         0,
     bottom:           false,
-    models:           []
+    models:           [],
+    dragables: {
+      log:      {  width:  400,  height: 600,  top: 10,  left: 10 },
+      settings: {  width:  400,  height: 600,  top: 20,  left: 20 },
+      diff:     {  width:  800,  height: 300,  top: 40,  left: 40 },
+      help:     {  width:  800,  height: 300,  top: 40,  left: 40 }
+    }
   } 
   let context = {};
   
-// found at: openai.com/api/pricing
+// The following info is found at: openai.com/api/pricing
   let defaultModels = [ // known models their compatabilities and prices
-    { "model": "ada"                         , "target": "",      "input": "$0.00010   ", "output": "$0.00010  ", "units": "1k", "asOf": "7/22" }, 
-    { "model": "babbage"                     , "target": "",      "input": "$0.01      ", "output": "$0.01     ", "units": "1k", "asOf": "" }, 
-    { "model": "babbage-002"                 , "target": "",      "input": "$0.00040   ", "output": "$0.00040  ", "units": "1k", "asOf": "7/22" },
-    { "model": "curie"                       , "target": "chat",  "input": "$0.01      ", "output": "$0.01     ", "units": "1k", "asOf": "" }, 
-    { "model": "davinci"                     , "target": "",      "input": "$0.01      ", "output": "$0.01     ", "units": "1k", "asOf": "" }, 
-    { "model": "davinci-002"                 , "target": "",      "input": "$0.0020    ", "output": "$0.0020   ", "units": "1k", "asOf": "7/22" },
-    { "model": "gpt-3.5-turbo"               , "target": "chat",  "input": "$0.0030    ", "output": "$0.0030   ", "units": "1k", "asOf": "" }, 
-    { "model": "gpt-3.5-turbo-0125"          , "target": "chat",  "input": "$0.00050   ", "output": "$0.00150  ", "units": "1k", "asOf": "7/22" },
-    { "model": "gpt-3.5-turbo-0301"          , "target": "chat",  "input": "$0.00150   ", "output": "$0.0020   ", "units": "1k", "asOf": "" },
-    { "model": "gpt-3.5-turbo-0613"          , "target": "chat",  "input": "$0.00150   ", "output": "$0.0020   ", "units": "1k", "asOf": "" }, 
-    { "model": "gpt-3.5-turbo-1106"          , "target": "chat",  "input": "$0.0010    ", "output": "$0.0020   ", "units": "1k", "asOf": "7/22" },
-    { "model": "gpt-3.5-turbo-16k"           , "target": "chat",  "input": "$0.01      ", "output": "$0.01     ", "units": "1k", "asOf": "" },
-    { "model": "gpt-3.5-turbo-16k-0613"      , "target": "chat",  "input": "$0.0030    ", "output": "$0.0040   ", "units": "1k", "asOf": "7/22" }, 
-    { "model": "gpt-3.5-turbo-instruct"      , "target": "chat",  "input": "$0.00050   ", "output": "$0.0020   ", "units": "1k", "asOf": "7/22" },
-    { "model": "gpt-3.5-turbo-instruct-0914" , "target": "chat",  "input": "$0.01      ", "output": "$0.01     ", "units": "1k", "asOf": "" },
-    { "model": "gpt-4"                       , "target": "chat",  "input": "$0.030     ", "output": "$0.010    ", "units": "1k", "asOf": "7/22" }, 
-    { "model": "gpt-4-0125-preview"          , "target": "chat",  "input": "$0.010     ", "output": "$0.030    ", "units": "1k", "asOf": "7/22" },
-    { "model": "gpt-4-0613"                  , "target": "chat",  "input": "$0.010     ", "output": "$0.01     ", "units": "1k", "asOf": "" }, 
-    { "model": "gpt-4-1106-preview"          , "target": "chat",  "input": "$0.010     ", "output": "$0.030    ", "units": "1k", "asOf": "7/22" },
-    { "model": "gpt-4-32k"                   , "target": "chat",  "input": "$0.060     ", "output": "$0.120    ", "units": "1k", "asOf": "7/22" }, 
-    { "model": "gpt-4-32k-0613"              , "target": "chat",  "input": "$0.060     ", "output": "$0.120    ", "units": "1k", "asOf": "" }, 
-    { "model": "gpt-4-32k-0314"              , "target": "chat",  "input": "$0.060     ", "output": "$0.120    ", "units": "1k", "asOf": "" }, 
-    { "model": "gpt-4-turbo"                 , "target": "chat",  "input": "$0.010     ", "output": "$0.030    ", "units": "1k", "asOf": "7/22" },
-    { "model": "gpt-4-turbo-2024-04-09"      , "target": "chat",  "input": "$0.010     ", "output": "$0.030    ", "units": "1k", "asOf": "7/22" },
-    { "model": "gpt-4-turbo-preview"         , "target": "chat",  "input": "$0.01      ", "output": "$0.01     ", "units": "1k", "asOf": "" },
-    { "model": "gpt-4o"                      , "target": "chat",  "input": "$0.0050    ", "output": "$0.0150   ", "units": "1k", "asOf": "7/22" },
-    { "model": "gpt-4o-2024-05-13"           , "target": "chat",  "input": "$0.0050    ", "output": "$0.0150   ", "units": "1k", "asOf": "7/22" },
-    { "model": "gpt-4o-mini"                 , "target": "chat",  "input": "$0.000150  ", "output": "$0.00060  ", "units": "1k", "asOf": "7/22" },
-    { "model": "gpt-4o-mini-2024-07-18"      , "target": "chat",  "input": "$0.000150  ", "output": "$0.00060  ", "units": "1k", "asOf": "7/22" },
-    { "model": "text-ada-001"                , "target": "chat",  "input": "$0.01      ", "output": "$0.01     ", "units": "1k", "asOf": "" }, 
-    { "model": "text-babbage-001"            , "target": "chat",  "input": "$0.01      ", "output": "$0.01     ", "units": "1k", "asOf": "" }, 
-    { "model": "text-curie-001"              , "target": "chat",  "input": "$0.01      ", "output": "$0.01     ", "units": "1k", "asOf": "" }, 
-    { "model": "text-davinci-001"            , "target": "chat",  "input": "$0.01      ", "output": "$0.01     ", "units": "1k", "asOf": "" }, 
-    { "model": "text-davinci-002"            , "target": "chat",  "input": "$0.01      ", "output": "$0.01     ", "units": "1k", "asOf": "" }, 
-    { "model": "text-davinci-003"            , "target": "chat",  "input": "$0.01      ", "output": "$0.01     ", "units": "1k", "asOf": "" }, 
-    { "model": "text-embedding-3-large"      , "target": "embed", "input": "$0.00013   ", "output": "$0.00013  ", "units": "1k", "asOf": "7/22" },
-    { "model": "text-embedding-3-small"      , "target": "embed", "input": "$0.00002   ", "output": "$0.00002  ", "units": "1k", "asOf": "7/22" },
-    { "model": "text-embedding-ada-002"      , "target": "embed", "input": "$0.01      ", "output": "$0.01     ", "units": "1k", "asOf": "" },
-    { "model": "tts-1"                       , "target": "audio", "input": "$0.01      ", "output": "$0.01     ", "units": "1k", "asOf": "" },
-    { "model": "tts-1-1106"                  , "target": "audio", "input": "$0.01      ", "output": "$0.01     ", "units": "1k", "asOf": "" },
-    { "model": "tts-1-hd"                    , "target": "audio", "input": "$0.01      ", "output": "$0.01     ", "units": "1k", "asOf": "" },
-    { "model": "tts-1-hd-1106"               , "target": "audio", "input": "$0.01      ", "output": "$0.01     ", "units": "1k", "asOf": "" }
+    { model: "ada"                         , target: "",      input: "$0.00010   ", output: "$0.00010  ", units: "1k", asOf: "7/22" }, 
+    { model: "babbage"                     , target: "",      input: "$0.01      ", output: "$0.01     ", units: "1k", asOf: "" }, 
+    { model: "babbage-002"                 , target: "",      input: "$0.00040   ", output: "$0.00040  ", units: "1k", asOf: "7/22" },
+    { model: "curie"                       , target: "chat",  input: "$0.01      ", output: "$0.01     ", units: "1k", asOf: "" }, 
+    { model: "davinci"                     , target: "",      input: "$0.01      ", output: "$0.01     ", units: "1k", asOf: "" }, 
+    { model: "davinci-002"                 , target: "",      input: "$0.0020    ", output: "$0.0020   ", units: "1k", asOf: "7/22" },
+    { model: "gpt-3.5-turbo"               , target: "chat",  input: "$0.0030    ", output: "$0.0030   ", units: "1k", asOf: "" }, 
+    { model: "gpt-3.5-turbo-0125"          , target: "chat",  input: "$0.00050   ", output: "$0.00150  ", units: "1k", asOf: "7/22" },
+    { model: "gpt-3.5-turbo-0301"          , target: "chat",  input: "$0.00150   ", output: "$0.0020   ", units: "1k", asOf: "" },
+    { model: "gpt-3.5-turbo-0613"          , target: "chat",  input: "$0.00150   ", output: "$0.0020   ", units: "1k", asOf: "" }, 
+    { model: "gpt-3.5-turbo-1106"          , target: "chat",  input: "$0.0010    ", output: "$0.0020   ", units: "1k", asOf: "7/22" },
+    { model: "gpt-3.5-turbo-16k"           , target: "chat",  input: "$0.01      ", output: "$0.01     ", units: "1k", asOf: "" },
+    { model: "gpt-3.5-turbo-16k-0613"      , target: "chat",  input: "$0.0030    ", output: "$0.0040   ", units: "1k", asOf: "7/22" }, 
+    { model: "gpt-3.5-turbo-instruct"      , target: "chat",  input: "$0.00050   ", output: "$0.0020   ", units: "1k", asOf: "7/22" },
+    { model: "gpt-3.5-turbo-instruct-0914" , target: "chat",  input: "$0.01      ", output: "$0.01     ", units: "1k", asOf: "" },
+    { model: "gpt-4"                       , target: "chat",  input: "$0.030     ", output: "$0.060    ", units: "1k", asOf: "7/22" }, 
+    { model: "gpt-4-0125-preview"          , target: "chat",  input: "$0.010     ", output: "$0.030    ", units: "1k", asOf: "7/22" },
+    { model: "gpt-4-0613"                  , target: "chat",  input: "$0.010     ", output: "$0.01     ", units: "1k", asOf: "" }, 
+    { model: "gpt-4-1106-preview"          , target: "chat",  input: "$0.010     ", output: "$0.030    ", units: "1k", asOf: "7/22" },
+    { model: "gpt-4-32k"                   , target: "chat",  input: "$0.060     ", output: "$0.120    ", units: "1k", asOf: "7/22" }, 
+    { model: "gpt-4-32k-0613"              , target: "chat",  input: "$0.060     ", output: "$0.120    ", units: "1k", asOf: "" }, 
+    { model: "gpt-4-32k-0314"              , target: "chat",  input: "$0.060     ", output: "$0.120    ", units: "1k", asOf: "" }, 
+    { model: "gpt-4-turbo"                 , target: "chat",  input: "$0.010     ", output: "$0.030    ", units: "1k", asOf: "7/22" },
+    { model: "gpt-4-turbo-2024-04-09"      , target: "chat",  input: "$0.010     ", output: "$0.030    ", units: "1k", asOf: "7/22" },
+    { model: "gpt-4-turbo-preview"         , target: "chat",  input: "$0.01      ", output: "$0.01     ", units: "1k", asOf: "" },
+    { model: "gpt-4o"                      , target: "chat",  input: "$0.0050    ", output: "$0.0150   ", units: "1k", asOf: "7/22" },
+    { model: "gpt-4o-2024-05-13"           , target: "chat",  input: "$0.0050    ", output: "$0.0150   ", units: "1k", asOf: "7/22" },
+    { model: "gpt-4o-mini"                 , target: "chat",  input: "$0.000150  ", output: "$0.00060  ", units: "1k", asOf: "7/22" },
+    { model: "gpt-4o-mini-2024-07-18"      , target: "chat",  input: "$0.000150  ", output: "$0.00060  ", units: "1k", asOf: "7/22" },
+    { model: "text-ada-001"                , target: "chat",  input: "$0.01      ", output: "$0.01     ", units: "1k", asOf: "" }, 
+    { model: "text-babbage-001"            , target: "chat",  input: "$0.01      ", output: "$0.01     ", units: "1k", asOf: "" }, 
+    { model: "text-curie-001"              , target: "chat",  input: "$0.01      ", output: "$0.01     ", units: "1k", asOf: "" }, 
+    { model: "text-davinci-001"            , target: "chat",  input: "$0.01      ", output: "$0.01     ", units: "1k", asOf: "" }, 
+    { model: "text-davinci-002"            , target: "chat",  input: "$0.01      ", output: "$0.01     ", units: "1k", asOf: "" }, 
+    { model: "text-davinci-003"            , target: "chat",  input: "$0.01      ", output: "$0.01     ", units: "1k", asOf: "" }, 
+    { model: "text-embedding-3-large"      , target: "embed", input: "$0.00013   ", output: "$0.00013  ", units: "1k", asOf: "7/22" },
+    { model: "text-embedding-3-small"      , target: "embed", input: "$0.00002   ", output: "$0.00002  ", units: "1k", asOf: "7/22" },
+    { model: "text-embedding-ada-002"      , target: "embed", input: "$0.01      ", output: "$0.01     ", units: "1k", asOf: "" },
+    { model: "tts-1"                       , target: "audio", input: "$0.01      ", output: "$0.01     ", units: "1k", asOf: "" },
+    { model: "tts-1-1106"                  , target: "audio", input: "$0.01      ", output: "$0.01     ", units: "1k", asOf: "" },
+    { model: "tts-1-hd"                    , target: "audio", input: "$0.01      ", output: "$0.01     ", units: "1k", asOf: "" },
+    { model: "tts-1-hd-1106"               , target: "audio", input: "$0.01      ", output: "$0.01     ", units: "1k", asOf: "" }
   ];  
-  let models = [];
-  models = defaultModels;
 
   let validModels = [];
   let machineState = "";
@@ -121,7 +125,7 @@
 
   function assessCost( bufr, rep, fin ) {                 /** Compute cost of input tokens using current model and passed text */
     var rptCost = "";
-    var atr, tokens, price, costParm, cost;
+    var thisModel, atr, tokens, price, costParm, cost;
 
     if( rep ) {          // include repeating context in cost
       rptCost = $( '#repeatingContext' ).val();
@@ -135,8 +139,9 @@
       atr = "input";
     }
     
-    costParm = defaultModels.find( ( defaultModels ) => defaultModels.model == context.model )[ atr ];
-    cost = parseFloat( costParm.replace( "$", "" ) );
+    thisModel = context.model;
+    costParm = context.models.find( ( { model } ) => model == thisModel );
+    cost = parseFloat( costParm.input.replace( "$", "" ) );
 
     tokens = String( ( ( srcCost.length ??= 0 ) + ( rptCost.length ??= 0 ) ) / 4 );
     price = Number.parseFloat( ( tokens * cost ) / 1000  ).toFixed( 6 );
@@ -183,12 +188,13 @@
 
   $( document ).ready( function() {                  /** Things that cannot happen until document is fully loaded */ 
     // make some windows dragable
-      dragElement(  document.getElementById( "help" ) );
-      dragElement(  document.getElementById( "log" ) );
+      dragElement(  document.getElementById( "help"     ) );
+      dragElement(  document.getElementById( "log"      ) );
       dragElement(  document.getElementById( "settings" ) );
+      dragElement(  document.getElementById( "diff"     ) );
     
-    sourceInp   = document.getElementById( "sourceText" );
-    currentInp  = document.getElementById( "thisChunk" );
+    sourceInp   = document.getElementById( "sourceText"  );
+    currentInp  = document.getElementById( "thisChunk"   );
     simpleChunk = document.getElementById( "simpleChunk" );
 
     init();
@@ -199,126 +205,147 @@
   } );
 
   function estimateCost() {                          /** Display estimated cost of input tokens using current model and source text */
-    var [ tokens, price ] = assessCost( '#sourceText', true, false );
-    $( '#inputTokens' ).text( tokens );   
-    $( '#inputCost' ).text( price )  ; 
-    var [ otokens, oprice ] = assessCost( '#sourceText', false, true );
-    $( '#outputTokens' ).text( otokens );   
-    $( '#outputCost' ).text( oprice )  ; 
-    $( '#totalCost' ).text( ( parseFloat( price ) + parseFloat( oprice ) ).toFixed( 6 ) );
+    if( context.model.length > 0 ) {
+      var [ tokens, price ] = assessCost( '#sourceText', true, false );
+      $( '#inputTokens' ).text( tokens );   
+      $( '#inputCost' ).text( price )  ; 
+
+      var [ otokens, oprice ] = assessCost( '#sourceText', false, true );
+      $( '#outputTokens' ).text( otokens );   
+      $( '#outputCost' ).text( oprice )  ; 
+      $( '#totalCost' ).text( ( parseFloat( price ) + parseFloat( oprice ) ).toFixed( 6 ) );
+    } else {
+      toast( "No model selected. Select model", "Fault" );
+    }
   }
 
-  function getContext() {                            /** Retrieve variables from localstorage */    
+  function getContext() {                            /** Retrieve variables from local storage */    
+    let storedContext = {};
     context = defaultContext;
+    context.models = defaultModels;
     //dbRead( 'settings', '', '' );
     let contextString = localStorage.getItem( "openAiContext" );
-    
+   
     if( contextString ) {
-      const storedContext = JSON.parse( contextString );
-      
+      storedContext = JSON.parse( contextString ); 
+
       for( var attr in storedContext ) {  // copy from saved context to current context. hint saved may not have all current values
         if( storedContext.hasOwnProperty( attr ) ) {
           context[ attr ] = storedContext[ attr ];
         }
       }
 
-     for( bIdx = 0; bIdx < 10; bIdx += 1 ) {
-       $( "#b" + bIdx ).show();
-     }
-
-      for( var attr in context ) {  // Copy from current context to form  
-        if( context.hasOwnProperty( attr ) && ( attr.indexOf( "Height" ) < 0 ) ) {      
-          switch( attr ) {
-            case "chunkSize":
-              document.getElementById( "chunkSizeValue" ).innerText = context.chunkSize;
-              document.getElementById( attr ).value = context[ attr ];
-              break;
-            
-            case "chunkSeparator":
-              $( "#" + attr ).val( context.chunkSeparator ).change();
-              break;
-              
-            case "isMarkChunk":  
-              document.getElementById( "isMarkChunk" ).checked   = context.isMarkChunk;
-              break;
-            
-            case "buffers":
-            case "chunkCount":
-            case "isMarkChunks":
-              break;
-
-            case "model":
-              $( "#model" ).val( context.model );
-              break;
-          
-            case "bufferTitle0":
-            case "bufferTitle1":
-            case "bufferTitle2":
-            case "bufferTitle3":
-            case "bufferTitle4":
-            case "bufferTitle5":
-            case "bufferTitle6":
-            case "bufferTitle7":
-            case "bufferTitle8":
-            case "bufferTitle9":
-              if( context.hasOwnProperty( attr ) ) {
-                var ttl = document.getElementById( attr );
-                ttl.value = context[ attr ];
-                ttl.style.height = context[ attr + "Height" ];  
-              }
-              break;
-              
-            case "previousPrompts": // These have height attributes that may change
-            case "repeatingContext":
-            case "sourceText":
-            case "thisChunk":
-            case "simpleChunk":
-            case "target":
-            case "buffer0":
-            case "buffer1":
-            case "buffer2":
-            case "buffer3":
-            case "buffer4":
-            case "buffer5":
-            case "buffer6":
-            case "buffer7":
-            case "buffer8":
-            case "buffer9":
-              var obj = document.getElementById( attr );
-              obj.value = context[ attr ];
-              obj.style.height = context[ attr + "Height" ];               
-              break;
-            
-            case "bufferToggle0":
-            case "bufferToggle1":
-            case "bufferToggle2":
-            case "bufferToggle3":
-            case "bufferToggle4":
-            case "bufferToggle5":
-            case "bufferToggle6":
-            case "bufferToggle7":
-            case "bufferToggle8":
-            case "bufferToggle9":
-              var idx = attr.slice( -1 );
-              $( "#" + attr ).prop( "checked", context[ attr ] ).change();  
-              $( "#buffer" + idx ).css( "display", context[ attr ] ? "inline" : "none" );   
-              break;
-              
-            default:
-              toast( `Getting: ${attr}`, 'Progress' );
-              
-              if( document.hasOwnProperty( attr ) ) {
-                document.getElementById( attr ).value = context[ attr ];
-              } else {
-                toast( `Unsupported property in local storage: ${attr}`, 'Fault' );
-              }
-          }
+      for( mod in storedContext.models ) {
+        if( storedContext.models.hasOwnProperty( mod ) ) {
+          context.models[ mod ] = storedContext.models[ mod ];
         }
-      }      
+      }
     }
+
+    for( bIdx = 0; bIdx < 10; bIdx += 1 ) {
+      $( "#b" + bIdx ).show();
+    }
+
+    for( var attr in context ) {  // Copy from current context to form  
+      if( context.hasOwnProperty( attr ) && ( attr.indexOf( "Height" ) < 0 ) ) {      
+        switch( attr ) {
+          case "chunkSize":
+            document.getElementById( "chunkSizeValue" ).innerText = context.chunkSize;
+            document.getElementById( attr ).value = context[ attr ];
+            break;
+          
+          case "chunkSeparator":
+            $( "#" + attr ).val( context.chunkSeparator ) /*.change()*/ ;
+            break;
+            
+          case "isMarkChunk":  
+            document.getElementById( "isMarkChunk" ).checked   = context.isMarkChunk;
+            break;
+          
+          case "dragables":
+            for( itm in context.dragables ) {
+              for( atr in context.dragables[ itm ] ) {
+                $( `#${itm}`).css( atr, context.dragables[ itm ][ atr ] );
+              }                
+            } 
+
+            break;
+
+          case "buffers":
+          case "chunkCount":
+          case "isMarkChunks":
+            break;
+
+          case "model":
+            $( "#model" ).val( context.model );
+            break;
+        
+          case "bufferTitle0":
+          case "bufferTitle1":
+          case "bufferTitle2":
+          case "bufferTitle3":
+          case "bufferTitle4":
+          case "bufferTitle5":
+          case "bufferTitle6":
+          case "bufferTitle7":
+          case "bufferTitle8":
+          case "bufferTitle9":
+            if( context.hasOwnProperty( attr ) ) {
+              var ttl = document.getElementById( attr );
+              ttl.value = context[ attr ];
+              ttl.style.height = context[ attr + "Height" ];  
+            }
+            break;
+            
+          case "previousPrompts": // These have height attributes that may change
+          case "repeatingContext":
+          case "sourceText":
+          case "thisChunk":
+          case "simpleChunk":
+          case "target":
+          case "buffer0":
+          case "buffer1":
+          case "buffer2":
+          case "buffer3":
+          case "buffer4":
+          case "buffer5":
+          case "buffer6":
+          case "buffer7":
+          case "buffer8":
+          case "buffer9":
+            var obj = document.getElementById( attr );
+            obj.value = context[ attr ];
+            obj.style.height = context[ attr + "Height" ];               
+            break;
+          
+          case "bufferToggle0":
+          case "bufferToggle1":
+          case "bufferToggle2":
+          case "bufferToggle3":
+          case "bufferToggle4":
+          case "bufferToggle5":
+          case "bufferToggle6":
+          case "bufferToggle7":
+          case "bufferToggle8":
+          case "bufferToggle9":
+            var idx = attr.slice( -1 );
+            $( "#" + attr ).prop( "checked", context[ attr ] ).change();  
+            $( "#buffer" + idx ).css( "display", context[ attr ] ? "inline" : "none" );   
+            break;
+            
+          default:
+            toast( `Getting: ${attr}`, 'Progress' );
+            
+            if( document.hasOwnProperty( attr ) ) {
+              document.getElementById( attr ).value = context[ attr ];
+            } else {
+              toast( `Unsupported property in local storage: ${attr}`, 'Fault' );
+            }
+        }
+      }
+    }      
     
-     
-//    $( "#newBuffers" ).show();
+    localStorage.setItem( "openAiContext", JSON.stringify( context ) );
   }
 
   function getModels() {                             /** Retrieve chatgpt supported models */ 
@@ -350,34 +377,39 @@
   function init() {                                  /** Configure app at startup */
     markState( "Initializing" );
 //  initDb( 'simplify', 'context' );
-    getModels();  // set default model
     getContext(); // override all defaults with saved data
+    getModels();  // set default model
     markState( "Idling" );
     startStop( "play next", "pause redo cancel" );
   }
   
-  function initModels() {                            /**  */
+  function initModels() {                            /** Get valid openai models */
     var mdlAry = [];
-    var mdlObj =  document.getElementById( "modelSettingsBody" );
     var mdlIdx = 0;
 
-    for( itm in models ) { 
+//    if( context.models.length < 1 ) { //have existing models
+//      context.models = defaultModels;
+//    }
+
+    for( itm in context.models ) { // build table of default models
       mdlAry.push( 
         `<tr>
-           <td>                                       ${models[mdlIdx].model} </td> 
-           <td> <input type='text' name='${mdlIdx}-target' class='edt' value='${models[mdlIdx].target}'> </td> 
-           <td> <input type='text' name='${mdlIdx}-input'  class='edt' value='${models[mdlIdx].input}'  > </td> 
-           <td> <input type='text' name='${mdlIdx}-output' class='edt' value='${models[mdlIdx].output}'  > </td> 
+           <td>                                                               ${context.models[mdlIdx].model} </td> 
+           <td> <input type='text' name='${mdlIdx}-target' class='edt' value='${context.models[mdlIdx].target}'> </td> 
+           <td> <input type='text' name='${mdlIdx}-input'  class='edt' value='${context.models[mdlIdx].input}'  > </td> 
+           <td> <input type='text' name='${mdlIdx}-output' class='edt' value='${context.models[mdlIdx].output}'  > </td> 
          </tr>` );
         mdlIdx += 1;
     }
 
-    mdlObj.innerHTML = mdlAry.join( "\n" )
+    //var 
+    mdlObj =  document.getElementById( "modelSettingsBody" ).innerHTML = mdlAry.join( "\n" );
+//  mdlObj.innerHTML = mdlAry.join( "\n" )
     $( '.edt' ).on( "change", function() { 
       var itm = this.value;
       var [row, id] = this.name.split( "-" );
-      /*context.*/models[row][id] = itm;
-//      saveContext();
+      context.models[row][id] = itm;
+      saveContext();
     } );
   }
 
@@ -508,7 +540,7 @@
           break;
           
         case "model":
-//          oontext.model = $( '#model' ).val();
+          context.model = $( '#model' ).val();
           break;
 
         case "sourceText":
