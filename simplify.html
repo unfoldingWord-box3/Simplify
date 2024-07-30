@@ -11,6 +11,7 @@
     <script src="./drag.js"             > </script>
     <script src="./log.js"              > </script>
     <script src="./diff.js"             > </script>
+    <script src="./drawdown.js"         > </script>
     <!-- script src="./indexedDbV2.js"      > </script -->
     <script src="./simplify.js"         > </script>
     <title> Simplify </title>
@@ -22,10 +23,11 @@
           <tr>
             <td> <h3 class="title" > Simplify </h3></td>
             <td style="text-align: right;" > 
-              <span data-text='Show differences' class='tooltip'> <i class='fas fa-clone'     onclick="toggle( '#diff'     )" > </i> </span>
-              <span data-text='Show event log'   class='tooltip'> <i class='fas fa-list'      onclick="toggle( '#log'      )" > </i> </span>
-              <span data-text='Show settings'    class='tooltip'> <i class='fas fa-cog'       onclick="toggle( '#settings' )" > </i> </span>
-              <span data-text='Offer help'       class='tooltip'> <i class='fas fa-info'      onclick="toggle( '#help'     )" > </i> </span>
+              <span data-text='Show differences'    class='tooltip'> <i class='fas fa-clone'     onclick="toggle(    '#diff'     )" > </i> </span>
+              <span data-text='Show event log'      class='tooltip'> <i class='fas fa-list'      onclick="toggle(    '#log'      )" > </i> </span>
+              <span data-text='Show settings'       class='tooltip'> <i class='fas fa-cog'       onclick="toggle(    '#settings' )" > </i> </span>
+              <span data-text='Batch Process Files' class='tooltip'> <i class='fas fa-bolt'      onclick="initBatch( '#batch'    )" > </i> </span>
+              <span data-text='Offer help'          class='tooltip'> <i class='fas fa-info'      onclick="toggle(    '#help'     )" > </i> </span>
             </td>
           </tr>
         </tbody>
@@ -38,7 +40,7 @@
         <input name='configed' type='checkbox' onclick='toggle("#conf")' checked > </span> <br>
       <div id='conf'>
         1. <button onclick="setKey()">    Set API Key </button> 
-          Set up an OpenAI account then enter key here. <br>
+          Set up an OpenAI account (<a href='https://openai.com' target='BLANK' >OpenAi</a>) then enter key here. <br>
 
         2. Next pick a Model
           <select id="model" onchange="saveContext( 'model', this.value )" >
@@ -70,7 +72,8 @@
 
         7. Enable <input type="checkbox" id="isMarkChunk" onchange="saveContext('isMarkChunk', this.value )" >
           Mark Output Chunks <br>
-        8. If all else fails: Click 
+        8. Show Sizes <input type="checkbox" id="isShowSizes" onchange="saveContext('isShowSizes', this.value )" > of each buffer <br>
+        9. If all else fails: Click 
           <i class='fas fa-info' onclick="toggle( '#help'     )" > </i>
           For help or <button onclick='removeLocalStorage()' >Reset App</button>
       </div>
@@ -79,11 +82,11 @@
     <div id="mainPage" >
       <h3> Previous Prompts </h3>
       <textarea id="previousPrompts"  class="textBox resizable" onchange="saveContext( 'previousPrompts',  this.value )" > </textarea>
-      <h3> Enter Repeating context </h3>
+      <h3> Enter Repeating context <span id="repeatingContextSize" ></span> </h3>
       <textarea id="repeatingContext" class="textBox resizable" onchange="saveContext( 'repeatingContext', this.value )" ></textarea> <br>
       <span id=context></span> <br>
       
-      <h3> Enter Source Text </h3>
+      <h3> Enter Source Text <span id="sourceTextSize" ></span> </h3> 
       <textarea id="sourceText"       class="textBox resizable" onchange="saveContext( 'sourceText', this.value )"  style="background-color: wheat;" >
       </textarea> <br>
           
@@ -99,22 +102,24 @@
         <button onclick="redo()"     id="redo"    title="Redo previous block" > <i class='fas fa-redo'         > </i> </button> &nbsp; 
         <button onclick="cancel()"   id="cancel"  title="Cancel this pass"    > <i class='fas fa-eject'        > </i> </button>
       </div> <br> <br>
+      
       <div class='flxrow'>
         <div class="cols blk sidebyside">
-          <h3> Current Chunk <span id="chunkNumber" ></span></h3>   
+          <h3> Current Chunk <span id="chunkNumber" ></span> <span id="thisChunkSize" ></span> </h3>   
           <textarea id="thisChunk" class="textBox resizable" 
                     onchange="saveContext( 'thisChunk', this.value )" 
                     onmouseup="$( '#simpleChunk' ).height( $( '#thisChunk' ).height() );"></textarea> <br>
         </div> 
         <div class="cols blk sidebyside"> 
-          <h3> Simplified Chunk <span id="simplifiedNumber" ></span> </h3>   
+          <h3> Simplified Chunk <span id="simplifiedNumber" > </span> <span id="simplifiedSize" ></span> </h3>   
           <textarea id="simpleChunk" class="textBox resizable" 
                     onchange="saveContext( 'simpleChunk', this.value )"
                     onmouseup="$( '#thisChunk' ).height( $( '#simpleChunk' ).height() )"></textarea> <br>
         </div>       
       </div>
+      
       <div class="blk wide clear"> 
-        <h3> Combined Simplified Text </h3>
+        <h3> Combined Simplified Text <span id="targetSize" ></span></h3>
         <textarea id="target" class="textBox resizable" style="border: thin solid lightgrey;" onchange="saveContext( 'target', this.value )" ></textarea><br />
       </div> <br>
       
@@ -124,70 +129,70 @@
 
         <div class="buffer" id="b0">
           <input    type="text" class="bufferTitle"            id="bufferTitle0" value="" onchange="saveContext( 'bufferTitle0', this.value )">  
-          <input    type="checkbox" class="bufferToggle"       id="bufferToggle0"         onclick="bufferToggle( '0', this )" >
+          <input    type="checkbox" class="bufferToggle"       id="bufferToggle0"         onclick="bufferToggle( '0', this )" > <span id="buffer0Size" ></span>
           <!-- i class='fa fa-window-close' onclick='toggle( "#b6" );' > </i --> 
           <textarea             class="textBox resizable"      id="buffer0"               onchange="saveContext( 'buffer0',      this.value )"></textarea><br />
         </div>
 
         <div class="buffer" id="b1">
           <input    type="text"     class="bufferTitle"        id="bufferTitle1" value="" onchange="saveContext( 'bufferTitle1', this.value  )"> 
-          <input    type="checkbox" class="bufferToggle"       id="bufferToggle1"         onclick="bufferToggle( '1', this )" >
+          <input    type="checkbox" class="bufferToggle"       id="bufferToggle1"         onclick="bufferToggle( '1', this )" > <span id="buffer1Size" ></span>
           <!-- i class='fa fa-window-close' onclick='hide( "#b1" );' > </i --> 
           <textarea                 class="textBox resizable"  id="buffer1"               onchange="saveContext( 'buffer1',      this.value )" ></textarea>
         </div>
         
         <div class="buffer" id="b2">
           <input    type="text"     class="bufferTitle"        id="bufferTitle2" value="" onchange="saveContext( 'bufferTitle2', this.value )">  
-          <input    type="checkbox" class="bufferToggle"       id="bufferToggle2"         onclick="bufferToggle( '2', this )" >
+          <input    type="checkbox" class="bufferToggle"       id="bufferToggle2"         onclick="bufferToggle( '2', this )" > <span id="buffer2Size" ></span>
           <!-- i class='fa fa-window-close' onclick='toggle( "#b2" );' > </i --> 
           <textarea                 class="textBox resizable"  id="buffer2"               onchange="saveContext( 'buffer2',      this.value )"></textarea><br />
         </div>
 
         <div class="buffer" id="b3">
           <input    type="text"     class="bufferTitle"        id="bufferTitle3" value="" onchange="saveContext( 'bufferTitle3', this.value )"> 
-          <input    type="checkbox" class="bufferToggle"       id="bufferToggle3"         onclick="bufferToggle( '3', this )" > 
+          <input    type="checkbox" class="bufferToggle"       id="bufferToggle3"         onclick="bufferToggle( '3', this )" >  <span id="buffer3Size" ></span>
           <!-- i class='fa fa-window-close' onclick='toggle( "#b3" );' > </i --> 
           <textarea                 class="textBox resizable"  id="buffer3"               onchange="saveContext( 'buffer3',      this.value )"></textarea><br />
         </div>
 
         <div class="buffer" id="b4">
           <input    type="text" class="bufferTitle"            id="bufferTitle4" value="" onchange="saveContext( 'bufferTitle4', this.value  )"> 
-          <input    type="checkbox" class="bufferToggle"       id="bufferToggle4"         onclick="bufferToggle( '4', this )" >
+          <input    type="checkbox" class="bufferToggle"       id="bufferToggle4"         onclick="bufferToggle( '4', this )" > <span id="buffer4Size" ></span>
           <!-- i class='fa fa-window-close' onclick='toggle( "#b4" );' > </i -->  
           <textarea             class="textBox resizable"      id="buffer4"               onchange="saveContext( 'buffer4',      this.value )" ></textarea>
         </div>
 
         <div class="buffer" id="b5">
           <input    type="text" class="bufferTitle"            id="bufferTitle5" value="" onchange="saveContext( 'bufferTitle5', this.value )">  
-          <input    type="checkbox" class="bufferToggle"       id="bufferToggle5"         onclick="bufferToggle( '5', this )" >
+          <input    type="checkbox" class="bufferToggle"       id="bufferToggle5"         onclick="bufferToggle( '5', this )" > <span id="buffer5Size" ></span>
           <!-- i class='fa fa-window-close' onclick='toggle( "#b5" );' > </i --> 
           <textarea             class="textBox resizable"      id="buffer5"               onchange="saveContext( 'buffer5',      this.value )"></textarea><br />
         </div>
 
         <div class="buffer" id="b6">
           <input    type="text" class="bufferTitle"            id="bufferTitle6" value="" onchange="saveContext( 'bufferTitle6', this.value )">  
-          <input    type="checkbox" class="bufferToggle"       id="bufferToggle6"         onclick="bufferToggle( '6', this )" >
+          <input    type="checkbox" class="bufferToggle"       id="bufferToggle6"         onclick="bufferToggle( '6', this )" > <span id="buffer6Size" ></span>
           <!-- i class='fa fa-window-close' onclick='toggle( "#b6" );' > </i --> 
           <textarea             class="textBox resizable"      id="buffer6"               onchange="saveContext( 'buffer6',      this.value )"></textarea><br />
         </div>
         
         <div class="buffer" id="b7">
           <input    type="text" class="bufferTitle"            id="bufferTitle7" value="" onchange="saveContext( 'bufferTitle6', this.value )">  
-          <input    type="checkbox" class="bufferToggle"       id="bufferToggle7"         onclick="bufferToggle( '7', this )" >
+          <input    type="checkbox" class="bufferToggle"       id="bufferToggle7"         onclick="bufferToggle( '7', this )" > <span id="buffer7Size" ></span>
           <!-- i class='fa fa-window-close' onclick='toggle( "#b6" );' > </i --> 
           <textarea             class="textBox resizable"      id="buffer7"               onchange="saveContext( 'buffer7',      this.value )"></textarea><br />
         </div>
         
         <div class="buffer" id="b8">
           <input    type="text" class="bufferTitle"            id="bufferTitle8" value="" onchange="saveContext( 'bufferTitle8', this.value )">  
-          <input    type="checkbox" class="bufferToggle"       id="bufferToggle8"         onclick="bufferToggle( '8', this )" >
+          <input    type="checkbox" class="bufferToggle"       id="bufferToggle8"         onclick="bufferToggle( '8', this )" > <span id="buffer8Size" ></span>
           <!-- i class='fa fa-window-close' onclick='toggle( "#b6" );' > </i --> 
           <textarea             class="textBox resizable"      id="buffer8"               onchange="saveContext( 'buffer8',      this.value )"></textarea><br />
         </div>
         
         <div class="buffer" id="b9">
           <input    type="text" class="bufferTitle"            id="bufferTitle9" value="" onchange="saveContext( 'bufferTitle9', this.value )">  
-          <input    type="checkbox" class="bufferToggle"       id="bufferToggle9"         onclick="bufferToggle( '9', this )" >
+          <input    type="checkbox" class="bufferToggle"       id="bufferToggle9"         onclick="bufferToggle( '9', this )" > <span id="buffer9Size" ></span>
           <!-- i class='fa fa-window-close' onclick='toggle( "#b6" );' > </i --> 
           <textarea             class="textBox resizable"      id="buffer9"               onchange="saveContext( 'buffer9',      this.value )"></textarea><br />
         </div>      
@@ -195,12 +200,12 @@
       </div>
     </div>
     
-    <div id="log"      class="logPage dragable"  >
+    <div id="log"      class="logPage dragable" >
       <table width="100%">
         <tbody>
           <tr class="hdr" >
             <th> <h3 id="logheader" class="title" > Simplify Log  <span id='logTime'> </span> </h3> </th>
-            <th style="text-align: right;" > 
+            <th class='actions' > 
               <span data-text='Keep scrolling to bottom' class='botm tooltip' >
                 <input type='checkbox' name='bottomFeeder' onclick='setBottom();' >
                 <i class='fa fa-fast-forward btn-icon'> </i>
@@ -226,13 +231,46 @@
         </table>  
       </div>        
     </div>        
+
+    <div id="batch"    class="batchPage dragable" >
+      <table width="100%">
+        <tbody>
+          <tr class="hdr" >
+            <th> <h3 id="batchheader" class="title" > Batch Process Whole Files </h3> </th>
+            <th class='actions' > 
+              <span data-text='Close this window'      class='tooltip'> 
+              <i class='fas fa-window-close' onclick="toggle( '#batch' )" > </i>  </span>
+            </th>
+          </tr>
+        </tbody>
+      </table>
+      <br>
+      <div class='batchBody'>
+        <input type="file" 
+               onchange="loadFile( this.files )" 
+               accept='.md, .txt, .csv, .htm, .html' 
+               multiple ><span id='fileName' ></span><br>
+        <textarea id='textFile' rows='5' ></textarea><br>
+        
+        Pattern:     <textarea id='pattern'     rows='1' >-sim</textarea> <br>
+   <!-- Destination: <textarea id='destination' rows='1' >./</textarea>   <br -->
+        
+        <div class="blk">
+          <button onclick="playAll()"   id="playAll" title="Play continuously"   > <i class='fas fa-play'         > </i> </button> &nbsp; 
+          <button onclick="pauseAll()"  id="pause"   title="Pause"               > <i class='fas fa-pause'        > </i> </button> &nbsp; 
+          <button onclick="nextAll()"   id="next"    title="Next or single step" > <i class='fas fa-step-forward' > </i> </button> &nbsp; 
+      <!-- button onclick="redo()"      id="redo"    title="Redo previous block" > <i class='fas fa-redo'         > </i> </button> &nbsp;  -->
+          <button onclick="cancelAll()" id="cancel"  title="Cancel this pass"    > <i class='fas fa-eject'        > </i> </button>
+        </div>
+      </div>        
+    </div>        
     
-    <div id="settings" class="settingsPage dragable"  >
+    <div id="settings" class="settingsPage dragable" >
       <table id='settingsTable' width="100%"  >
         <tbody>
           <tr class="hdr" >
             <th> <h3 id="settingsheader" class="title" > Manage Models </h3> </th>
-            <th style="text-align: right;" > 
+            <th class='actions' > 
               <i class='fas fa-window-close' onclick="toggle( '#settings' )"       ></i> 
             </th>
           </tr>
@@ -260,62 +298,61 @@
         <tbody>
           <tr class='hdr'>
             <th> <h3 id="diffheader" class="title" > Difference of 2 buffers </h3> </th>
-            <th style="text-align: right;"> 
-              <span data-text='Generate difference view' class='tooltip' ><button onclick='diffBuffers()'> Diff </button> </span>
+            <th class='actions' > 
+              <span data-text='Generate difference view' class='tooltip' > <button onclick='diffBuffers()'> Diff </button> </span>
               <span data-text='Close this window'        class='tooltip' > <i class='fas fa-window-close' onclick="toggle( '#diff' )"       ></i> </span>
             </th>
           </tr>
         </body>
       </table>
       <div class='diffBody'>
-        <!--div class="card" -->
           <div class="row">
-            <div class="col">
-              <span> Document with changes 
-                <select id='changedBuffer' style='width: 10em;' >
-                  <option value='sourceText'  > Source Text      </option>   
-                  <option value='thisChunk'   > Current Chunk    </option> 
-                  <option value='simpleChunk' > Simplified Chunk </option> 
-                  <option value='target'      > Combined Text    </option> 
-                  <option value='b0'          > Buffer 1         </option> 
-                  <option value='b1'          > Buffer 2         </option> 
-                  <option value='b2'          > Buffer 3         </option> 
-                  <option value='b3'          > Buffer 4         </option> 
-                  <option value='b4'          > Buffer 5         </option> 
-                  <option value='b5'          > Buffer 6         </option> 
-                  <option value='b6'          > Buffer 7         </option> 
-                  <option value='b7'          > Buffer 8         </option> 
-                  <option value='b8'          > Buffer 9         </option> 
-                  <option value='b9'          > Buffer 10        </option>
-                </select>
-                <hr>
-              </span>
-              <div class="card current-document" id="output"></div>
-            </div>
             <div class="col">
               <span>Original Document 
                 <select id='orgBuffer' style='width: 10em;' >
-                  <option value='sourceText'  > Source Text      </option>   
-                  <option value='thisChunk'   > Current Chunk    </option> 
-                  <option value='simpleChunk' > Simplified Chunk </option> 
-                  <option value='target'      > Combined Text    </option> 
-                  <option value='b0'          > Buffer 1         </option> 
-                  <option value='b1'          > Buffer 2         </option> 
-                  <option value='b2'          > Buffer 3         </option> 
-                  <option value='b3'          > Buffer 4         </option> 
-                  <option value='b4'          > Buffer 5         </option> 
-                  <option value='b5'          > Buffer 6         </option> 
-                  <option value='b6'          > Buffer 7         </option> 
-                  <option value='b7'          > Buffer 8         </option> 
-                  <option value='b8'          > Buffer 9         </option> 
-                  <option value='b9'          > Buffer 10        </option>
+                  <option value='sourceText'           > Source Text      </option>   
+                  <option value='thisChunk'   selected > Current Chunk    </option> 
+                  <option value='simpleChunk'          > Simplified Chunk </option> 
+                  <option value='target'               > Combined Text    </option> 
+                  <option value='b0'                   > Buffer 1         </option> 
+                  <option value='b1'                   > Buffer 2         </option> 
+                  <option value='b2'                   > Buffer 3         </option> 
+                  <option value='b3'                   > Buffer 4         </option> 
+                  <option value='b4'                   > Buffer 5         </option> 
+                  <option value='b5'                   > Buffer 6         </option> 
+                  <option value='b6'                   > Buffer 7         </option> 
+                  <option value='b7'                   > Buffer 8         </option> 
+                  <option value='b8'                   > Buffer 9         </option> 
+                  <option value='b9'                   > Buffer 10        </option>
                 </select>
                 <hr>
                </span>
                <div class="card system-generated" id="outputNew"></div>
             </div>
+            
+            <div class="col">
+              <span> Document with changes 
+                <select id='changedBuffer' style='width: 10em;' >
+                  <option value='sourceText'           > Source Text      </option>   
+                  <option value='thisChunk'            > Current Chunk    </option> 
+                  <option value='simpleChunk' selected > Simplified Chunk </option> 
+                  <option value='target'               > Combined Text    </option> 
+                  <option value='b0'                   > Buffer 1         </option> 
+                  <option value='b1'                   > Buffer 2         </option> 
+                  <option value='b2'                   > Buffer 3         </option> 
+                  <option value='b3'                   > Buffer 4         </option> 
+                  <option value='b4'                   > Buffer 5         </option> 
+                  <option value='b5'                   > Buffer 6         </option> 
+                  <option value='b6'                   > Buffer 7         </option> 
+                  <option value='b7'                   > Buffer 8         </option> 
+                  <option value='b8'                   > Buffer 9         </option> 
+                  <option value='b9'                   > Buffer 10        </option>
+                </select>
+                <hr>
+              </span>
+              <div class="card current-document" id="output"></div>
+            </div>
           </div>
-        <!-- /div -->
       </div>
     </div>
 
@@ -324,17 +361,17 @@
         <tbody>
           <tr class='hdr'>
             <th> <h3 id="helpheader" class="title" > Simplify Information </h3> </th>
-            <th style="text-align: right;" > 
+            <th class='actions' > 
               <i class='fas fa-window-close' onclick="toggle( '#help' )"       ></i> 
             </th>
           </tr>
         </body>
       </table>
-      <div class='logBody'>
-        <table class='helpRows' > 
+      <div class='helpBody'>
+        <!-- table class='helpRows' > 
           <tbody sticky>        
             <tr>
-              <td colspan=2 > 
+              <td colspan=2 --> 
                 <p> The following are features and deficiencies of the current POC
                   <ul>
                     <li> Features
@@ -404,8 +441,10 @@
                              The default of gpt-3.5-turbo has been tested with this app. 
                              The list is constructed from what is available on your plan.
   
-  We generally recommend that developers use either GPT-4o or GPT-3.5 Turbo, depending on the complexity of your tasks. 
-  GPT-4o generally performs better on a wide range of tasks, while GPT-3.5 Turbo is fast and inexpensive for simpler tasks. 
+                             We generally recommend that developers use either GPT-4o or GPT-3.5 Turbo, 
+                             depending on the complexity of your tasks. 
+                             GPT-4o generally performs better on a wide range of tasks, 
+                             while GPT-3.5 Turbo is fast and inexpensive for simpler tasks. 
   
                              Models known to not be currently suitable are suppressed in the dropdown list. </li> 
                         <li> Periodically, examine cost of input text. this changes per model and size of text to process. </li>
@@ -419,6 +458,7 @@
                         <li> Select a chunk separator. 
                              If the separator does not exist in a particular chunk then the entire chunk is used. </li>
                         <li> At any time you can check the mark Output Chinks to have --- n --- separate each chunk in the output. </li>
+                        <li> Indicate the size of each buffer as simplification progresses. </li>
                         <li> When all else fails, Reset the app. Restarting the app uses cached data in browsers localstorage. 
                              If this should get corrupt, then this will help to flush out any corrupted data (along with all the good data.)
                              Before resetting, save any buffers or configuration settings in a scratch file so that you can easily restore them. </li>
@@ -427,8 +467,16 @@
                     <li> Prepare Text </li>
                       <ol>
                         <li> Open a document to be processed.</li>
-                        <li> First copy the source text into one of the bufers and call it something like "original" </li>
+                        <li> First copy the source text into one of the buffers and call it something like "original" </li>
                         <li> Copy contents to paste buffer (CTRL-A CTRL-C) </li>
+                        <li> Here are some sample prompts you may try:
+                          <ul>
+                            <li> Please simplify the following text without comment. </li> 
+                            <li> Reword the following text so that an English as a second language 6th grader, can understand it. Retain all tables, titles and headers. </li>
+                            <li> Convert the following text to Hindi.</li>
+                            <li> Reduce this text to 5 bullet points.</li>
+                          </ul> 
+                        </li>
                         <li> Paste in Source text control (CTRL-V). 
                              You can directly type into source control or edit what you paste. 
                              You can resize the control by dragging from the lower right hand corner. </li>
@@ -497,6 +545,26 @@
                       </ul>
                     </li>
 
+                    <li> Batch Processing
+                      <p> Once you  arrive at a good prompt that will work on a set of files, 
+                          you can use the batch processing feature to process them in succession. <p>
+                      <ul> 
+                        <li> Click the <i class='fas fa-bolt' onclick="toggle( '#batch' )" > to configure the process.</i> </li>
+                         <li> Click Choose files to navigate to a place where source files reside. </li>
+                         <li> Drag select one or more files. </li>
+                         <li> Click "Open". </li>
+                         <li> Enter an optional "Pattern" to add just before the file extension in case source files are in downloads folder. </li>
+                         <li> Click the <i class='fas fa-play' > </i> button to begin processing files listed above. </li>
+                         <li> Open Log <i class='fas fa-list' onclick="toggle( '#log' )" > </i> and 
+                              click Fast Forward <i class='fa fa-fast-forward btn-icon'></i> to watch document processing progress. </li>
+                         <li> Wait for "Proessing Complete" message in Batch dialog box. </li>
+                         <li> Inspect files in downloads folder. </li>
+                         <li> Move them to final destination. </li>
+                         <li> In the same session you can change the prompt and reprocess the same files if a change is necessary. </li>
+                         <li>  </li>
+                      </ul>
+                    </li>
+
                     <li> Cost 
                       <ul> 
                         <li> The Chatbot API is not free. 
@@ -519,21 +587,21 @@
                         <li> <em>Some response codes you may see</em>
                           <table>
                             <tbody>
-                              <tr><td> 200</td><td> Success                                      </td></tr>
-                              <tr><td> 400</td><td> Invalid request (invalid api key, bad model) </td></tr>
-                              <tr><td> 401</td><td> Unauthorized error, which indicates that 
-                                                    authentication is required and has failed 
-                                                    or has not yet been provided                 </td></tr>
-                              <tr><td> 403</td><td> Forbidden error specifically indicates that 
-                                                    the request is understood but the server is 
-                                                    refusing to fulfill it. Could be restricted 
-                                                    by permissions,IP, rate limiting.            </td></tr>
-                              <tr><td> 429</td><td> Too many requests, credit expired before 
-                                                    12/22 ($18) tokens expired ($5), free 
-                                                    account time (3mo) expired, multiple 
-                                                    accounts on same phone number                </td></tr>
-                              <tr><td> 500</td><td> System Error                                 </td></tr>
-                              <tr><td> 503</td><td> System Overloaded.                           </td></tr>
+                              <tr><td> 200</td><td> Success                                             </td></tr>
+                              <tr><td> 400</td><td> Invalid request (invalid api key, bad model)        </td></tr>
+                              <tr><td> 401</td><td> Unauthorized error, which indicates that            
+                                                    authentication is required and has failed           
+                                                    or has not yet been provided                        </td></tr>
+                              <tr><td> 403</td><td> Forbidden error specifically indicates that         
+                                                    the request is understood but the server is         
+                                                    refusing to fulfill it. Could be restricted         
+                                                    by permissions,IP, rate limiting.                   </td></tr>
+                              <tr><td> 429</td><td> Too many requests, credit expired before            
+                                                    12/22 ($18) tokens expired ($5), free               
+                                                    account time (3mo) expired, multiple                
+                                                    accounts on same phone number                       </td></tr>
+                              <tr><td> 500</td><td> System Error. Not your fault. Try again later.      </td></tr>
+                              <tr><td> 503</td><td> System Overloaded. Not your fault. Try again later. </td></tr>
                             </tbody>
                           </table>
                         </li>  
@@ -541,10 +609,10 @@
                     </li>
                   </ol>
                 </p>
-              </td>
+              <!-- /td>
             </tr>
           </tbody>
-        </table>
+        </table -->
       </div>
     </div>
   </body>
