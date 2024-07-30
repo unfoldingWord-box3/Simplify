@@ -597,11 +597,23 @@ function diffBuffers() {
   doDiff( orgTxt, newTxt );
 }
 
+function detag( txt ) {
+  var v1 = txt.replace( /&lt;ins&gt;/g,   "<ins>" );
+  var v2 = v1.replace(  /&lt;\/ins&gt;/g, "</ins>" );
+  var v3 = v2.replace(  /&lt;del&gt;/g,   "<del>" );
+  return v3.replace(    /&lt;\/del&gt;/g, "</del>" );
+}
+
 function doDiff( orgTxt, newTxt ) {
   let output = htmldiff( orgTxt, newTxt );
   let input = htmldiff(  newTxt, orgTxt );
-
+  
 // Show HTML diff output as HTML!
-  document.getElementById( "output" ).innerHTML = output;
-  document.getElementById( "outputNew" ).innerHTML = input;
+  let outer = markdown( output )
+  let outputTag = detag( outer );
+  let inner = markdown( input )
+  let inputTag = detag( inner );
+  
+  $( "#output"    ).html( outputTag );
+  $( "#outputNew" ).html( inputTag );
 }
