@@ -12,6 +12,7 @@
     model:            "gpt=3.5-turbo",
     endpoint:         "",
     isMarkChunk:      true,
+    isShowSizes:      false,
     bufferTitle0:     "",
     bufferTitle1:     "",
     bufferTitle2:     "",
@@ -103,6 +104,7 @@
 
   let validModels = [];
   let machineState = "";
+  let machineStateAll = "";
   let isContinue = false; 
   let candidate  = "";
   let sourceText = ""; 
@@ -111,19 +113,24 @@
   let sourceInp;  
   let currentInp; 
   let simpleChunk;
+  
+  let dummy = [];
+  let fileContent = []; // new Blob( [ dummy ], {type: "octet/stream"} );
+  let fileNames   = [];
+  
 
   let cost = {
     input:  0,
     output: 0,
   }
   
-  function addDot() {                                /**  */
+  function addDot() {                                /** Proof of life while processing */
     var err = document.getElementById( 'chatError' )
     err.innerText += ".";
     //err.show;
   }
 
-  function assessCost( bufr, rep, fin ) {                 /** Compute cost of input tokens using current model and passed text */
+  function assessCost( bufr, rep, fin ) {            /** Compute cost of input tokens using current model and passed text */
     var rptCost = "";
     var thisModel, atr, tokens, price, costParm, cost;
 
@@ -148,7 +155,7 @@
     return [ tokens, price ];
   }
 
-  function bufferToggle( idx, val ) {                /** toggle textarea visibility */
+  function bufferToggle( idx, val ) {                /** Toggle textarea visibility */
     $( "#buffer" + idx ).toggle();
     saveContext( "bufferToggle" + idx, val.checked );
   }
@@ -159,6 +166,12 @@
     setError( "" );
   }
   
+  function cancelAll() {                             /** Stop processing at end of current file and prepare to restart */                           
+    markState( "Canceling" );
+    startStopAll( "play next", "pause cancel" );
+    setError( "" );
+  }
+
   function clearChunks( string ) {                   /** Clear out a list of text areas before processing further */ 
     var list = string.split( " " );
 
@@ -192,6 +205,7 @@
       dragElement(  document.getElementById( "log"      ) );
       dragElement(  document.getElementById( "settings" ) );
       dragElement(  document.getElementById( "diff"     ) );
+      dragElement(  document.getElementById( "batch"    ) );
     
     sourceInp   = document.getElementById( "sourceText"  );
     currentInp  = document.getElementById( "thisChunk"   );
@@ -199,7 +213,7 @@
 
     init();
 
-    $( ".dragable" ).on( 'click', toHigh );
+    $( ".dragable" ).on( 'click', toHigher );
 
     $( ".textBox" ).on( "resize", function() { scanSizes(); } );  
   } );
@@ -384,6 +398,16 @@
     startStop( "play next", "pause redo cancel" );
   }
   
+  function initBatch( id ) {
+    toggle( id );
+    
+    if( $( '#textFile' ).val().length > 0 ) {
+      startStopAll( "play next", "pause cancel" );
+    } else {
+      startStopAll( "", "play next pause cancel" );
+    }
+  }
+  
   function initModels() {                            /** Get valid openai models */
     var mdlAry = [];
     var mdlIdx = 0;
@@ -414,7 +438,7 @@
     } );
   }
 
-  function initStepper() {                           /** set up the first chunk */
+  function initStepper() {                           /** Set up the first chunk */
     isContinue = true;
     toast( "Init Stepper.", "Progress" );
     startStop( "cancel pause", "play next redo" );
@@ -431,12 +455,31 @@
     context.chunkCount = 0;
     thisChunk = "";
   }
-  
+
+  async function loadFile( files ) {                 /** Capture list of files, download them and list in textarea */
+    var tgt = document.getElementById( 'textFile' );
+    var fn = document.getElementById( 'fileName' );
+    
+    for( fleIdx = 0; fleIdx < files.length; fleIdx += 1 ) {
+      var txt = await files[ fleIdx ].text() ;
+      $( "#textFile" ).append( files[ fleIdx ].name + "\n" );
+      fileContent.push( txt );
+      fileNames.push( files[ fleIdx ].name )
+    }
+    
+    startStopAll( "play next", "pause cancel" );
+  }
+
   function markState( txt ) {                        /** Set overall machine state to control action buttons */
     machineState = txt;
     toast( txt, "Progress" );
   }
   
+  function markStateAll( txt ) {                        /** Set overall machine state to control action buttons */
+    machineStateAll = txt;
+    toast( txt, "Progress" );
+  }
+
 /*function newBuffer() {                             / ** Add a buffer to existing list * /
     context.buffers += 1;
 
@@ -450,7 +493,7 @@
   }
 */
 
-  function next() {                                  /** resume processing next chunk */
+  function next() {                                  /** Resume processing next chunk */
     markState( "Stepping" );
     setError( "" );
     startStop( "pause cancel", "play next redo" );
@@ -463,7 +506,20 @@
     }
   }
    
-  function nextStep() {                              /** set up the next chunk */
+  function nextAll() {                               /** Resume processing next file */
+    markStateAll( "Stepping" );
+    setError( "" );
+    startStopAll( "pause cancel", "play next" );
+
+    if( ! isContinue ) {
+      initStepper();
+      simplifyProcess();    
+//    } else {
+//      completePrev();
+    }
+  }
+   
+  function nextStep() {                              /** Set up the next chunk */
     toast( "Next Step.", "Progress" );
     context.chunkCount += 1;
 
@@ -484,13 +540,19 @@
     currentInp.value = thisChunk;
   }
 
-  function pause() {                                 /** interrupt simplification */
+  function pause() {                                 /** Interrupt simplification */
     markState( "Pausing" );
-    startStop( "play cancel next redo", "pause " );
+    startStop( "play cancel next redo", "pause" );
     setError( "" );
   }
   
-  function play() {                                  /** start or resume simplification */
+  function pauseAll() {                              /** Interrupt simplification file list processing */
+    markStateAll( "Pausing" );
+    startStopAll( "play cancel next", "pause" );
+//    setError( "" );
+  }
+  
+  function play() {                                  /** Start or resume simplification */
     markState( "Playing" );
     startStop( "pause cancel", "play redo next" );
     setError( "" );
@@ -501,7 +563,69 @@
     }    
   }
   
-  async function processStep() {                     /** call chatgpt with request and wait for response */
+  async function playAll() {                         /** Initiate processing of all files in list */
+    var fileCount = 0;
+    
+    for( fileIdx in fileNames ) {
+      isLooping = true;
+      fileCount += 1;
+      toast( `Simplifying: ${fileNames[ fileIdx ]}.`, "Progress" );
+      $( '#fileName' ).text( `Processing: ${fileNames[ fileIdx ]}` );
+      
+      if( fileContent[ fileIdx ].length > 0 ) {
+        $( '#sourceText' ).val( fileContent[ fileIdx ] );
+        startStopAll( "pause cancel", "play next" );
+        play();
+        
+        while( isLooping ) {
+          switch( machineState ) {
+            case "Idling":
+              saveAsFile( fileIdx );
+              isLooping = false;
+              break;
+            
+            case "Completing":
+              isLooping = false;
+              break;
+              
+            case "Stepping":
+              saveAsFile( fileIdx );
+              markStateAll( "Pausing" );
+              startStopAll( "play next cancel", "pause" );
+              break;
+              
+            case "Pausing": // just hang out
+              break;
+              
+            case "Canceling":
+              isContinue = false;
+              isLooping = false;
+              break;            
+          }
+          
+          await sleep( 2000 );
+        }
+        
+//        if( ! isLooping ) {
+//          break;
+//        }
+      }
+    }
+
+    switch( machineStateAll ) {
+      case "Idling":
+        $( '#fileName' ).text( `Processing Complete.` );
+        toast( `Completed batch processing after ${fileCount} files.`, "Complete" );
+        break
+        
+      case "Canceling":
+        $( '#fileName' ).text( `Processing canceled.` );
+        toast( `Interrupted batch processing after ${fileCount} files.`, "Complete" );
+        break;            
+    }
+  }
+  
+  async function processStep() {                     /** Call chatgpt with request and wait for response */
     showSizes();
     toast( `Simplifying chunk: ${context.chunkCount} of  ${chunkN} chunks.`, "Progress" );   
     document.getElementById( "chunkNumber" ).innerText = context.chunkCount;
@@ -510,7 +634,7 @@
     await simplifyText( thisChunk, context.chunkCount );  
   }
   
-  function redo() {                                  /** reprocess current chunk */                          
+  function redo() {                                  /** Reprocess current chunk */                          
     markState( "Redoing" );
     clearChunks( "simpleChunk" );    
     startStop( "pause cancel", "play next redo" );
@@ -527,6 +651,27 @@
     }
   } 
 
+  function saveAsFile( idx ) {                       /** Use idx to find file name then download combined */
+    var txt = $( '#target'  ).val();
+    var pat = $( '#pattern' ).val();
+    var f1 = fileNames[ idx ];
+    var pos = f1.lastIndexOf( "." );
+    var ext = f1.slice( pos );
+    var base = f1.slice( 0, pos );
+// TBD encode pattern and directory
+//    var dir = $( '#destination' ).val();
+    var path = /*dir +*/ base + pat + ext;
+    var blob = new Blob( [ txt ], { type: 'text/plain' } );
+    
+	  var a = document.createElement( 'a' );
+    a.download = path
+    a.href = window.URL.createObjectURL( blob );
+    a.textContent = 'Download ready';
+    a.style='display:none';
+    a.click();    
+    toast( `Save file as: ${path}`, "Progress" );    
+  }
+  
   function saveContext( attr, val ) {                /** Save all persistent variables in localstorage */    
     markState( "Saving" );
 
@@ -1040,13 +1185,41 @@ Depending on your schedule, this is a good point to take a break. The first part
      }
   }
   
-  function showSizes() {                             /**  */
+  function showSizes() {                             /** Keep the sizes as well as content of buffers */
+    if( context.isShowSizes ) {
+      $( "#sourceTextSize"       ).text( " (" + $( "#sourceText"       ).val().length + "b)" );
+      $( "#repeatingContextSize" ).text( " (" + $( "#repeatingContext" ).val().length + "b)" );
+      $( "#thisChunkSize"        ).text( " (" + $( "#thisChunk"        ).val().length + "b)" );
+      $( "#simplifiedSize"       ).text( " (" + $( "#simpleChunk"      ).val().length + "b)" );
+      $( "#targetSize"           ).text( " (" + $( "#target"           ).val().length + "b)" );
+      
+      for( b = 0; b < 10; b += 1 ) {
+        var id = "#buffer" + b;
+        
+        if( $( id ).val().length > 0 ) { 
+          $( id + "Size" ).text( "(" + $( id ).val().length + "b)" );
+        } else {
+           $( id + "Size" ).text( "" );
+        }
+      }
+      
+    } else {
+      $( "#sourceTextSize"       ).text( "" );
+      $( "#repeatingContextSize" ).text( "" );
+      $( "#thisChunkSize"        ).text( "" );
+      $( "#simplifiedSize"       ).text( "" );
+      $( "#targetSize"           ).text( "" );
+      
+      for( b = 0; b < 10; b += 1 ) {
+        $( "#buffer" + b + "Size" ).text( "" );
+      }
+    }
   }
 
   async function simplifyProcess() {                 /** Walk through the source text breaking off chunks and sending them to chatgpt */    
     toast( `Simplifying: ${machineState} with ${context.model}`, "Progress" );
     
-    while( sourceText.length > 0 && isContinue ) {
+    while( isContinue ) {
       switch( machineState ) {
         case "Initing":
           break;
@@ -1055,9 +1228,14 @@ Depending on your schedule, this is a good point to take a break. The first part
           break;
 
         case "Stepping":
-          nextStep();
-          await processStep();
-          markState( "Pausing" );
+          if( sourceText.length > 0 ) {
+            nextStep();
+            await processStep();
+            markState( "Pausing" );
+          } else {
+            markState( "Completing" );
+            isContinue = false;
+          }
           break;
           
         case "Pausing":
@@ -1072,8 +1250,13 @@ Depending on your schedule, this is a good point to take a break. The first part
             completePrev();
           }
 
-          nextStep();
-          await processStep();
+          if( sourceText.length > 0 ) {
+            nextStep();
+            await processStep();
+          }else {
+            markState( "Completing" );
+            isContinue = false;
+          }
           break        
           
         case "Redoing":
@@ -1086,6 +1269,7 @@ Depending on your schedule, this is a good point to take a break. The first part
           break;
       }
         
+//      markState( "Completing" );
       await sleep( 3000 ); // throttle ai process to one call per second and check status once per second
       addDot(); 
 /*
@@ -1110,9 +1294,10 @@ Depending on your schedule, this is a good point to take a break. The first part
     
     startStop( "play next", "pause redo cancel" );
     markState( "Idling" );
+    showSizes();
   }
 
-  async function simplifyText( text, chunkCount ) {  /** invoke chat-gpt */
+  async function simplifyText( text, chunkCount ) {  /** Invoke chat-gpt */
 //    var mod = $( '#model' ).val();
 //    var mod = context.model;
     var resp = "";
@@ -1174,11 +1359,11 @@ Depending on your schedule, this is a good point to take a break. The first part
     });  
   }
     
-  function sleep( ms ) {                             /** suspend processing for some time */    
+  function sleep( ms ) {                             /** Suspend processing for some time */    
     return new Promise( resolve => setTimeout( resolve, ms ) );
   }
   
-  function startStop( buttonStart, buttonStop ) {    /** turn on and off sets of action buttons */
+  function startStop( buttonStart, buttonStop ) {    /** Turn on and off sets of action buttons */
     if( buttonStart != "" ) {
       var startList = "#" + buttonStart.trim().split( " " ).join( ", #" );
       $( startList ).removeClass( "disabled-button" );
@@ -1190,13 +1375,31 @@ Depending on your schedule, this is a good point to take a break. The first part
     }
   }
   
-  function toggle( divId ) {                         /** toggle div visibility */
-    $( divId ).toggle();
+  function startStopAll( buttonStart, buttonStop ) {    /** Turn on and off sets of action buttons */
+    if( buttonStart != "" ) {
+      var startList = "#all-" + buttonStart.trim().split( " " ).join( ", #all-" );
+      $( startList ).removeClass( "disabled-button" );
+    }
+    
+    if( buttonStop != "" ) {
+      var stopList = "#all-" + buttonStop.trim().split( " " ).join( ", #all-" );
+      $( stopList ).addClass( "disabled-button" );
+    }
   }
   
-  function toHigh( id ) {                            /** move this dragable to top of stack on click */
+  function toggle( divId ) {                         /** Toggle div visibility */
+    $( divId ).toggle();
+    toHigh( divId );
+  }
+  
+  function toHigher( e ) {
+    toHigh( "#" + e.currentTarget.id );
+  }
+  
+  function toHigh( id ) {                            /** Move this dragable to top of stack on click */
+    console.log( id );
     $( ".dragable" ).each( function() { $( this ).removeClass( "high" ) } )
-    $( this ).addClass( "high" );
+    $( id ).addClass( "high" );
   }
 
   function validModel( itm ) {                       /** See if retrived model works with opanai chat */
