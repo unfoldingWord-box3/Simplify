@@ -19,19 +19,23 @@
     return dteFmt;
   }
     
+//  async 
   function toast( msg, st ){                  /** Post up message then log it */
-    $( '.toaster' ).html( msg );
+    toastWho( "#toaster", msg, st )
+  }
+  
+  function toastWho( toste, msg, st ) {
+    $( toste ).html( msg );
     addLog( msg, st );
-    $( '.toaster',  ).addClass( 'show' );
+    $( toste ).addClass( 'show' );
     console.log( msg );
     
     setTimeout( function(){ // After 5 seconds, remove the show class from DIV
-      $( '.toaster',  ).removeClass( 'show' ); 
+      $( toste  ).removeClass( 'show' ); 
     }, 5000 );
   }
   
-  function zp( num ) {                        /** Zero pad numbers */
-  // add leading 0 to pad a 2 digit number
+  function zp( num ) {                        /** Zero pad 2 digit numbers */
     return ( "0" + num ).slice( -2 );
   }
 
