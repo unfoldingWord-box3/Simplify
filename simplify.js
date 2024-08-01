@@ -51,6 +51,7 @@
       log:      {  width:  400,  height: 600,  top: 10,  left: 10 },
       settings: {  width:  400,  height: 600,  top: 20,  left: 20 },
       diff:     {  width:  800,  height: 300,  top: 40,  left: 40 },
+      batch:    {  width:  400,  height: 300,  top: 40,  left: 40 },
       help:     {  width:  800,  height: 300,  top: 40,  left: 40 }
     }
   } 
@@ -115,7 +116,7 @@
   let simpleChunk;
   
   let dummy = [];
-  let fileContent = []; // new Blob( [ dummy ], {type: "octet/stream"} );
+  let fileContent = []; 
   let fileNames   = [];
   
 
@@ -127,7 +128,6 @@
   function addDot() {                                /** Proof of life while processing */
     var err = document.getElementById( 'chatError' )
     err.innerText += ".";
-    //err.show;
   }
 
   function assessCost( bufr, rep, fin ) {            /** Compute cost of input tokens using current model and passed text */
@@ -207,17 +207,16 @@
       dragElement(  document.getElementById( "diff"     ) );
       dragElement(  document.getElementById( "batch"    ) );
     
-    sourceInp   = document.getElementById( "sourceText"  );
-    currentInp  = document.getElementById( "thisChunk"   );
-    simpleChunk = document.getElementById( "simpleChunk" );
+    sourceInp     = document.getElementById( "sourceText"  );
+    currentInp    = document.getElementById( "thisChunk"   );
+    simpleChunk   = document.getElementById( "simpleChunk" );
 
     init();
 
-    $( ".dragable" ).on( 'click', toHigher );
-
-    $( ".textBox" ).on( "resize", function() { scanSizes(); } );  
+    $( '.dragable' ).on( 'click', toHigher );
+    $( '.textBox'  ).on( 'resize', function() { scanSizes(); } );  
   } );
-
+  
   function estimateCost() {                          /** Display estimated cost of input tokens using current model and source text */
     if( context.model.length > 0 ) {
       var [ tokens, price ] = assessCost( '#sourceText', true, false );
@@ -237,7 +236,6 @@
     let storedContext = {};
     context = defaultContext;
     context.models = defaultModels;
-    //dbRead( 'settings', '', '' );
     let contextString = localStorage.getItem( "openAiContext" );
    
     if( contextString ) {
@@ -274,6 +272,10 @@
             
           case "isMarkChunk":  
             document.getElementById( "isMarkChunk" ).checked   = context.isMarkChunk;
+            break;
+          
+          case "isShowSizes":  
+            document.getElementById( "isShowSizes" ).checked   = context.isShowSizes;
             break;
           
           case "dragables":
@@ -353,7 +355,7 @@
             if( document.hasOwnProperty( attr ) ) {
               document.getElementById( attr ).value = context[ attr ];
             } else {
-              toast( `Unsupported property in local storage: ${attr}`, 'Fault' );
+              toast( `Unsupported property in local storage: ${attr}. Ignoring.`, 'Fault' );
             }
         }
       }
@@ -375,7 +377,6 @@
     .then( response => response.json() )
     .then( obj => {
       obj.data.map( item => validModel( item.id ) );   
-//      obj.data.map( item => defaultModels
       validModels.sort();
       document.getElementById( "model" ).innerHTML = validModels.join( "\n" );
       $( "#model" ).val( context.model ); // select default model
@@ -391,7 +392,6 @@
   
   function init() {                                  /** Configure app at startup */
     markState( "Initializing" );
-//  initDb( 'simplify', 'context' );
     getContext(); // override all defaults with saved data
     getModels();  // set default model
     markState( "Idling" );
@@ -406,15 +406,13 @@
     } else {
       startStopAll( "", "play next pause cancel" );
     }
+    
+    document.getElementById( "fileProgress" ).value = 0;
   }
   
   function initModels() {                            /** Get valid openai models */
     var mdlAry = [];
     var mdlIdx = 0;
-
-//    if( context.models.length < 1 ) { //have existing models
-//      context.models = defaultModels;
-//    }
 
     for( itm in context.models ) { // build table of default models
       mdlAry.push( 
@@ -427,9 +425,8 @@
         mdlIdx += 1;
     }
 
-    //var 
-    mdlObj =  document.getElementById( "modelSettingsBody" ).innerHTML = mdlAry.join( "\n" );
-//  mdlObj.innerHTML = mdlAry.join( "\n" )
+    document.getElementById( "modelSettingsBody" ).innerHTML = mdlAry.join( "\n" );
+    
     $( '.edt' ).on( "change", function() { 
       var itm = this.value;
       var [row, id] = this.name.split( "-" );
@@ -444,21 +441,16 @@
     startStop( "cancel pause", "play next redo" );
     clearChunks( "thisChunk simpleChunk target" );
 
-/*// manage history  
-    let hist = document.getElementById( "history" );
-    let combined = localStorage.getItem( "openAiHistory" );
-    hist.value = combined;
-*/    
-
     sourceText = sourceInp.value;
     chunkN = parseInt( Math.max( sourceText.split( " " ).length / context.chunkSize, 1 ) );
     context.chunkCount = 0;
+    document.getElementById( "chunkProgress" ).value = 0;
     thisChunk = "";
   }
 
   async function loadFile( files ) {                 /** Capture list of files, download them and list in textarea */
-    var tgt = document.getElementById( 'textFile' );
-    var fn = document.getElementById( 'fileName' );
+//    var tgt = document.getElementById( 'textFile' );
+//    var fn = document.getElementById( 'fileName' );
     
     for( fleIdx = 0; fleIdx < files.length; fleIdx += 1 ) {
       var txt = await files[ fleIdx ].text() ;
@@ -477,21 +469,8 @@
   
   function markStateAll( txt ) {                        /** Set overall machine state to control action buttons */
     machineStateAll = txt;
-    toast( txt, "Progress" );
+    toastWho( "#toasterAl", txt, "Progress" );
   }
-
-/*function newBuffer() {                             / ** Add a buffer to existing list * /
-    context.buffers += 1;
-
-    if( context.buffers < 6 ) {
-      $( "#b" + context.buffers ).show();
-      $( "#newBuffers" ).show();
-    } else {
-      context.buffers = 5;
-//      $( "#newBuffers" ).hide();
-    }
-  }
-*/
 
   function next() {                                  /** Resume processing next chunk */
     markState( "Stepping" );
@@ -514,8 +493,6 @@
     if( ! isContinue ) {
       initStepper();
       simplifyProcess();    
-//    } else {
-//      completePrev();
     }
   }
    
@@ -552,6 +529,10 @@
 //    setError( "" );
   }
   
+  function persist() {                               /** Save context in local storage */
+    localStorage.setItem( "openAiContext", JSON.stringify( context ) );
+  }
+ 
   function play() {                                  /** Start or resume simplification */
     markState( "Playing" );
     startStop( "pause cancel", "play redo next" );
@@ -569,8 +550,8 @@
     for( fileIdx in fileNames ) {
       isLooping = true;
       fileCount += 1;
-      toast( `Simplifying: ${fileNames[ fileIdx ]}.`, "Progress" );
-      $( '#fileName' ).text( `Processing: ${fileNames[ fileIdx ]}` );
+      toastWho( "#toasterAll", `Processing: ${fileNames[ fileIdx ]}.`, "Progress" );
+//        $( '#fileName' ).text( `Processing: ${fileNames[ fileIdx ]}` );
       
       if( fileContent[ fileIdx ].length > 0 ) {
         $( '#sourceText' ).val( fileContent[ fileIdx ] );
@@ -585,7 +566,7 @@
               break;
             
             case "Completing":
-              isLooping = false;
+//              isLooping = false;
               break;
               
             case "Stepping":
@@ -605,22 +586,22 @@
           
           await sleep( 2000 );
         }
-        
-//        if( ! isLooping ) {
-//          break;
-//        }
       }
+      
+      document.getElementById( "fileProgress" ).value = parseInt( ( ( fileCount / fileNames.length ) ) * 100 );
+//      document.getElementById( "fileNumber" ).innerText = fileIdx + 1;
+
     }
 
     switch( machineStateAll ) {
       case "Idling":
         $( '#fileName' ).text( `Processing Complete.` );
-        toast( `Completed batch processing after ${fileCount} files.`, "Complete" );
+        toastWho( "#toasterAll", `Completed batch processing after ${fileCount} files.`, "Complete" );
         break
         
       case "Canceling":
         $( '#fileName' ).text( `Processing canceled.` );
-        toast( `Interrupted batch processing after ${fileCount} files.`, "Complete" );
+        toastWho( "#toasterAll", `Interrupted batch processing after ${fileCount} files.`, "Complete" );
         break;            
     }
   }
@@ -658,8 +639,6 @@
     var pos = f1.lastIndexOf( "." );
     var ext = f1.slice( pos );
     var base = f1.slice( 0, pos );
-// TBD encode pattern and directory
-//    var dir = $( '#destination' ).val();
     var path = /*dir +*/ base + pat + ext;
     var blob = new Blob( [ txt ], { type: 'text/plain' } );
     
@@ -700,14 +679,15 @@
             if( document.hasOwnProperty( attr ) ) {
               document.getElementById( attr ).value = val; // normal context attributes
             } else {
-              toast( `No longer such property as: ${attr}`, 'Fault' );
+              toast( `No longer such a property as: ${attr}. Ignoring.`, 'Fault' );
             }
           }
       }
       
       estimateCost();
       context[ attr ] = val;
-      scanSizes();       
+      scanSizes();    
+      showSizes();      
       markState( "Saved" );
     }
   }
@@ -717,16 +697,11 @@
       var tElem = this[ 'id' ];
       var h = document.getElementById( tElem );
       context[ tElem + "Height" ] = h.style.height;
+      persist();
     } );
 
-    localStorage.setItem( "openAiContext", JSON.stringify( context ) );
-  }
+   }
   
-/*  let hist = document.getElementById( "history" ); / **  * /
-  localStorage.getItem( "openAiHistory" );
-  getModels();
-  */
-   
 /* --- repeating prompts -----------------------------------------------------------------
 Please simplify the following text without comment. 
 
@@ -1171,10 +1146,14 @@ Depending on your schedule, this is a good point to take a break. The first part
 
   function setError( txt ) {                         /** Put some exception text near app state for a few seconds */
     document.getElementById( 'chatError' ).innerText = txt;
-
-    setTimeout( function(){ // After 5 seconds, remove the show class from DIV
-      document.getElementById( 'chatError' ).innerText = ""; 
-    }, 10000 );
+    
+    if( txt.length > 0 ) {
+      toast( txt, "Fault" );
+    
+      setTimeout( function(){ // After 5 seconds, remove the show class from DIV
+        document.getElementById( 'chatError' ).innerText = ""; 
+      }, 10000 );
+    }
   }
    
   function setKey() {                                /** Save secret chatgpt key in localstorage */    
@@ -1186,33 +1165,25 @@ Depending on your schedule, this is a good point to take a break. The first part
   }
   
   function showSizes() {                             /** Keep the sizes as well as content of buffers */
-    if( context.isShowSizes ) {
-      $( "#sourceTextSize"       ).text( " (" + $( "#sourceText"       ).val().length + "b)" );
-      $( "#repeatingContextSize" ).text( " (" + $( "#repeatingContext" ).val().length + "b)" );
-      $( "#thisChunkSize"        ).text( " (" + $( "#thisChunk"        ).val().length + "b)" );
-      $( "#simplifiedSize"       ).text( " (" + $( "#simpleChunk"      ).val().length + "b)" );
-      $( "#targetSize"           ).text( " (" + $( "#target"           ).val().length + "b)" );
+    var bufferNames = [ 
+        "sourceText", "repeatingContext", "thisChunk", "simpleChunk", "target",
+        "buffer0", "buffer1", "buffer2", "buffer3", "buffer4", 
+        "buffer5", "buffer6", "buffer7", "buffer8", "buffer9" 
+    ];
+    
+    for( bufId in bufferNames ) {
+      var bufName = "#" + bufferNames[ bufId ];
+      var bufTxt =   "";
       
-      for( b = 0; b < 10; b += 1 ) {
-        var id = "#buffer" + b;
+      if( context.isShowSizes ) {
+        var bufLen =  $( bufName ).val().length;
         
-        if( $( id ).val().length > 0 ) { 
-          $( id + "Size" ).text( "(" + $( id ).val().length + "b)" );
-        } else {
-           $( id + "Size" ).text( "" );
+        if( bufLen > 0 ) {
+          bufTxt = " (" + bufLen + "b)";
         }
       }
       
-    } else {
-      $( "#sourceTextSize"       ).text( "" );
-      $( "#repeatingContextSize" ).text( "" );
-      $( "#thisChunkSize"        ).text( "" );
-      $( "#simplifiedSize"       ).text( "" );
-      $( "#targetSize"           ).text( "" );
-      
-      for( b = 0; b < 10; b += 1 ) {
-        $( "#buffer" + b + "Size" ).text( "" );
-      }
+      $( bufName + "Size" ).text( bufTxt );
     }
   }
 
@@ -1269,14 +1240,8 @@ Depending on your schedule, this is a good point to take a break. The first part
           break;
       }
         
-//      markState( "Completing" );
       await sleep( 3000 ); // throttle ai process to one call per second and check status once per second
       addDot(); 
-/*
-      hist.value += "\n" + srcText;
-      localStorage.setItem( "openAiHistory", hist.value );
-      src.value = ""
-*/
     }
     
     switch( machineState ) {
@@ -1289,17 +1254,16 @@ Depending on your schedule, this is a good point to take a break. The first part
         isContinue = false;
         startStop( "", "play pause next redo cancel" ); 
         toast( "End of Text.", "Complete" );
-        setError( "End Of Text" );
+//        setError( "End Of Text" );
     }
     
     startStop( "play next", "pause redo cancel" );
-    markState( "Idling" );
     showSizes();
+    await sleep( 1000 );
+    markState( "Idling" );
   }
 
   async function simplifyText( text, chunkCount ) {  /** Invoke chat-gpt */
-//    var mod = $( '#model' ).val();
-//    var mod = context.model;
     var resp = "";
 
     if( context.model == null ) {
@@ -1308,12 +1272,7 @@ Depending on your schedule, this is a good point to take a break. The first part
     }
 
     const subscriptionKey = "Bearer " + localStorage.getItem( "openAiKey" );
-    //const organizationKey = localStorage.getItem( "openAiOrg" );
     const endpoint = 'https://api.openai.com/v1/chat/completions';
-/*    
-    const queryParams = '?q=' + encodeURIComponent( text ) + 
-        '&count=10&offset=0&mkt=en-us&safesearch=Moderate';
-*/
  
     await fetch( endpoint, {
       method:   "POST",
@@ -1323,7 +1282,7 @@ Depending on your schedule, this is a good point to take a break. The first part
         "Authorization": subscriptionKey
       },
       "body":            JSON.stringify( {
-        "model":         context.model, //"gpt-3.5-turbo", // $( '#model' ).val(),       //"default gpt-3.5-turbo", //selectedModel, 
+        "model":         context.model,
         "temperature":   Number( $( '#temperature' ).val() ), // default to 0.2
         "messages": [ {
            "role":       "user", 
@@ -1349,9 +1308,8 @@ Depending on your schedule, this is a good point to take a break. The first part
         }
       
         document.getElementById( "simpleChunk" ).value = data.choices[0].message.content;
-        document.getElementById( "simplifiedNumber" ).innerText = chunkCount;
+        document.getElementById( "simpleChunkNumber" ).innerText = chunkCount;
         candidate = sep + data.choices[0].message.content;
-//      toast( `Got Data: ${data.choices[0].message.content.slice(0,10)}`, "Progress" );
       }
     } )
     .catch( error => {
@@ -1375,7 +1333,7 @@ Depending on your schedule, this is a good point to take a break. The first part
     }
   }
   
-  function startStopAll( buttonStart, buttonStop ) {    /** Turn on and off sets of action buttons */
+  function startStopAll( buttonStart, buttonStop ) { /** Turn on and off sets of action buttons */
     if( buttonStart != "" ) {
       var startList = "#all-" + buttonStart.trim().split( " " ).join( ", #all-" );
       $( startList ).removeClass( "disabled-button" );
@@ -1392,8 +1350,19 @@ Depending on your schedule, this is a good point to take a break. The first part
     toHigh( divId );
   }
   
-  function toHigher( e ) {
-    toHigh( "#" + e.currentTarget.id );
+  function toHigher( e ) {                           /** While rasing to top, persist current size and location  */
+    var eObj = e.currentTarget;
+    var id   = eObj.id;
+    toHigh( "#" + id );
+    
+    var itm = context.dragables[ id ];
+    
+    itm.left    = eObj.offsetLeft;    // remember position and size
+    itm.top     = eObj.offsetTop; 
+    itm.width   = eObj.offsetWidth;
+    itm.height  = eObj.offsetHeight;
+    
+    persist();
   }
   
   function toHigh( id ) {                            /** Move this dragable to top of stack on click */
