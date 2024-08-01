@@ -15,6 +15,21 @@
     padding: 0;
   }
   
+  input[type="file"] {
+    display: none;
+  }
+
+  .custom-file-upload {
+    border:           1px solid #ccc;
+    display:          inline-block;
+    padding:          6px 12px;
+    margin-bottom:    5px;
+    cursor:           pointer;
+    border-radius:    5px;
+    background-color: #31ADE3;
+    color:            white;
+  }
+
   .stk {
     background-color: lightgrey;
   }
@@ -45,7 +60,6 @@
     
   .blk {
     position: relative;
-    f/loat: left;
     padding-right: 10px;
     border:none
   }
@@ -69,15 +83,17 @@
     border: none;
   }
 
-  .logBody, .helpBody, .settingsBody, .diffBody {
+  .logBody, .helpBody, .settingsBody, .diffBody, .batchBody {
     position:          relative;
     display:           block;
     border:            none;
+    margin:            0;
     overflow:          auto;
-    height:            75%;
+    padding-left:      5px;
+    height:            calc( 100% - 0.5in );
   }
-
-  .logPage, .settingsPage, .helpPage, .diffPage {
+  
+  .logPage, .settingsPage, .helpPage, .diffPage, .batchPage {
     position:         absolute;
     width:            5.5in;
     background-color: white;
@@ -88,7 +104,7 @@
     scroll:           none;
     padding-bottom:   30px;
   }
-  
+    
   #eventLogBody {
     scroll-snap-type: y proximity;
   }
@@ -96,19 +112,7 @@
   #eventLogBody:last-child() {
     scroll-snap-align: end;
   }
-  
-/* 
-  #simpleChunk {
-    anchor-name: --sideAnchor;
-    anchor-size( height );
-  }
-
-  #thisChunk {
-    height: anchor-size( --sideAnchor height );
-    resize: none;
-  }
-*/
-  
+    
   .wide, .buffer {
     width: 99%;
   }
@@ -119,7 +123,6 @@
   }
 
   header {
-    p/osition: sticky;
     height: 0.5in;
     vertical-align: middle;
     top: 0;
@@ -146,17 +149,26 @@
     margin:           0;
     padding:          5px;
     resize:           both;
+    box-sizing:       border-box;
   }
-
-  .settingsPage { w/idth: 5in; }
-  .logPage {      w/idth: 6in; }
 
   .hdr {
     border-bottom: thin solid grey;
+    padding-right: 5px;
   }
   
+  .actions { 
+    padding-right: 8px; 
+    text-align: right;
+  }
+  
+  #helpheader { p/adding-right: 5px;}
   .resizable {
     resize: vertical;
+  }
+  
+  .indent {
+    margin: 5px 0 5px 1in;
   }
   
   .textBox {
@@ -226,7 +238,6 @@
     border: thin solid grey;
     background-color: white;
     overflow: auto;
-    z-index: 1000;
     display: none;
     resize: both;
   }
@@ -256,10 +267,9 @@
   .tooltip:before {
     content:     attr(data-text); /* here's the magic */
     position:    absolute;
-    top:         120%;  /* vertically center */
+    top:         120%;            /* vertically center */
     transform:   translateY(-50%);
-    right:       100%;  /* move to left */
-    m/argin-left: 15px; /* and add a small left margin */
+    right:       100%;            /* move to left */
   
   /* basic styles */
     width:         200px;
