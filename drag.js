@@ -40,7 +40,6 @@
     function closeDragElement() {  // stop moving when mouse button is released:
       document.onmouseup = null;
       document.onmousemove = null;
-//    savePlace( subject ); // TBD make this sharable
 
       if( ! context.dragables ) {
         context.dragables = {};
@@ -56,6 +55,6 @@
       context.dragables[ itm ].top     = y2;
       context.dragables[ itm ].width   = subject.offsetWidth;
       context.dragables[ itm ].height  = subject.offsetHeight;
-      saveContext();
+//      saveContext( context.dragables[ itm ] );
     }
   }
