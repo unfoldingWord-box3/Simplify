@@ -87,14 +87,20 @@
       <textarea id="repeatingContext" class="textBox resizable" onchange="saveContext( 'repeatingContext', this.value )" ></textarea> <br>
       <span id=context></span> <br>
       
+      <div id="currentContextScope" >
+        <h3>Current Context <span id="currentContextSize" ></span> </h3>
+        <textarea id='currentContext' class='textBox resizable' disabled > </textarea> <br>
+      </div>
+      
       <h3> Enter Source Text <span id="sourceTextSize" ></span> </h3> 
       <textarea id="sourceText"       class="textBox resizable" onchange="saveContext( 'sourceText', this.value )"  style="background-color: wheat;" >
       </textarea> <br>
           
       <span id="toaster" ></span> <span id="chatError"> </span> <br>
        
-      <label for="chunkProgress">    Chunks Complete</label> &nbsp;
+      <label for="chunkProgress"> Chunks Complete </label> &nbsp;
       <progress id="chunkProgress" value="0" max="100"> 0% </progress>
+      <span id='chunksComplete'></span>
       
       <div class="blk">
         <button onclick="play()"     id="play"    title="Play continuously"   > <i class='fas fa-play'         > </i> </button> &nbsp; 
@@ -106,22 +112,23 @@
       
       <div class='flxrow'>
         <div class="cols blk sidebyside">
-          <h3> Current Chunk <span id="chunkNumber" ></span> <span id="thisChunkSize" ></span> </h3>   
-          <textarea id="thisChunk" class="textBox resizable" 
-                    onchange="saveContext( 'thisChunk', this.value )" 
-                    onmouseup="$( '#simpleChunk' ).height( $( '#thisChunk' ).height() );"></textarea> <br>
+          <h3> Current Chunk <span id="chunkNumber" ></span> <span id="currentChunkSize" ></span> </h3>   
+          <textarea id="currentChunk" class="textBox resizable" 
+                    onchange="saveContext( 'currentChunk', this.value )" 
+                    onmouseup="$( '#simplifiedChunk' ).height( $( '#currentChunk' ).height() );"></textarea> <br>
         </div> 
         <div class="cols blk sidebyside"> 
-          <h3> Simplified Chunk <span id="simpleChunkNumber" > </span> <span id="simpleChunkSize" ></span> </h3>   
-          <textarea id="simpleChunk" class="textBox resizable" 
-                    onchange="saveContext( 'simpleChunk', this.value )"
-                    onmouseup="$( '#thisChunk' ).height( $( '#simpleChunk' ).height() )"></textarea> <br>
+          <h3> Simplified Chunk <span id="simplifiedChunkNumber" > </span> <span id="simplifiedChunkSize" ></span> </h3>   
+          <textarea id="simplifiedChunk" class="textBox resizable" 
+                    onchange="saveContext( 'simplifiedChunk', this.value )"
+                    onmouseup="$( '#currentChunk' ).height( $( '#simplifiedChunk' ).height() )"></textarea> <br>
         </div>       
       </div>
       
       <div class="blk wide clear"> 
-        <h3> Combined Simplified Text <span id="targetSize" ></span></h3>
-        <textarea id="target" class="textBox resizable" style="border: thin solid lightgrey;" onchange="saveContext( 'target', this.value )" ></textarea><br />
+        <h3> Combined Simplified Text <span id="combinedSimplifiedTextSize" ></span></h3>
+        <textarea id="combinedSimplifiedText" class="textBox resizable" style="border: thin solid lightgrey;" 
+                  onchange="saveContext( 'combinedSimplifiedText', this.value )" ></textarea><br />
       </div> <br>
       
       <div class="blk bufferGroup clear">
@@ -271,7 +278,7 @@
         <span id="toasterAll" ></span> <span id="chatErrorAll"> </span> <br>
        
         <label for="fileProgress"> Files Complete </label> &nbsp;
-        <progress id="fileProgress" value="0" max="100"> 0% </progress>
+        <progress id="fileProgress" value="0" max="100"> 0% </progress> <span id='filesComplete' ></span>
       
         <div class="blk">
           <button onclick="playAll()"   id="playAll" title="Play continuously"   > <i class='fas fa-play'         > </i> </button> &nbsp; 
@@ -327,20 +334,20 @@
             <div class="col">
               <span>Original Document 
                 <select id='orgBuffer' style='width: 10em;' >
-                  <option value='sourceText'           > Source Text      </option>   
-                  <option value='thisChunk'   selected > Current Chunk    </option> 
-                  <option value='simpleChunk'          > Simplified Chunk </option> 
-                  <option value='target'               > Combined Text    </option> 
-                  <option value='b0'                   > Buffer 1         </option> 
-                  <option value='b1'                   > Buffer 2         </option> 
-                  <option value='b2'                   > Buffer 3         </option> 
-                  <option value='b3'                   > Buffer 4         </option> 
-                  <option value='b4'                   > Buffer 5         </option> 
-                  <option value='b5'                   > Buffer 6         </option> 
-                  <option value='b6'                   > Buffer 7         </option> 
-                  <option value='b7'                   > Buffer 8         </option> 
-                  <option value='b8'                   > Buffer 9         </option> 
-                  <option value='b9'                   > Buffer 10        </option>
+                  <option value='sourceText'            > Source Text      </option>   
+                  <option value='currentChunk' selected > Current Chunk    </option> 
+                  <option value='simplifiedChunk'       > Simplified Chunk </option> 
+                  <option value='combinedSimplifiedText'> Combined Text    </option> 
+                  <option value='b0'                    > Buffer 1         </option> 
+                  <option value='b1'                    > Buffer 2         </option> 
+                  <option value='b2'                    > Buffer 3         </option> 
+                  <option value='b3'                    > Buffer 4         </option> 
+                  <option value='b4'                    > Buffer 5         </option> 
+                  <option value='b5'                    > Buffer 6         </option> 
+                  <option value='b6'                    > Buffer 7         </option> 
+                  <option value='b7'                    > Buffer 8         </option> 
+                  <option value='b8'                    > Buffer 9         </option> 
+                  <option value='b9'                    > Buffer 10        </option>
                 </select>
                 <hr>
                </span>
@@ -421,9 +428,9 @@
                 <li> Convert to Claude free version. </li>
                 <li> Add pipeline section like DSPy. </li>
                 <li> Make buffers hide-able </li>
-                <li>  </li>
-                <li>  </li>
-                <li>  </li>
+                <li> Track total session cost </li>
+                <li> Track cost todate </li>
+                <li> Support cost tracking reset (trip meter) </li>
                 <li>  </li>
               </ol>   
             </li>
@@ -506,7 +513,11 @@
                    You can directly type into source control or edit what you paste. 
                    You can resize the control by dragging from the lower right hand corner. </li>
               <li> You can copy any prompt from the Previous Prompts control and paste it into the Repeating Context Control. 
-                   You can also ammend or write your own.</li>
+                   You can also amend or write your own.</li>
+              <li> If you separate repeating prompts with "---" then they will be taken in turn to perform sequential transformations of text. 
+                   The output of one transformation becomes the input to the next. </li>
+              <li> The "Combined Simplified Text is the result of all transformations. </li>
+              <li></li>
             </ol>  
 
             <li> <b> Simplify  </b></li>
