@@ -1,59 +1,63 @@
 
-  let defaultContext = { // defaults for all global variables replaced by local storage as changed
-    repeatingContext: "",  repeatingContextHeight: "1em",
-    previousPrompts:  "",  previousPromptsHeight:  "2em",
-    sourceText:       "",  sourceTextHeight:       "6em",
-    thisChunk:        "",  thisChunkHeight:        "4em",
-    simpleChunk:      "",  simpleChunkHeight:      "4em",
-    target:           "",  targetHeight:           "8em",
-    chunkSize:        500,
-    chunkSeparator:   " ",
-    chunkCount:       0,
-    model:            "gpt=3.5-turbo",
-    endpoint:         "",
-    isMarkChunk:      true,
-    isShowSizes:      false,
-    bufferTitle0:     "",
-    bufferTitle1:     "",
-    bufferTitle2:     "",
-    bufferTitle3:     "",
-    bufferTitle4:     "",
-    bufferTitle5:     "",
-    bufferTitle6:     "",
-    bufferTitle7:     "",
-    bufferTitle8:     "",
-    bufferTitle9:     "",
-    buffers:          0,
-    buffer0:          "",  buffer0Height: "6em",
-    buffer1:          "",  buffer1Height: "6em",
-    buffer2:          "",  buffer2Height: "6em",
-    buffer3:          "",  buffer3Height: "6em",
-    buffer4:          "",  buffer4Height: "6em",
-    buffer5:          "",  buffer5Height: "6em",
-    buffer6:          "",  buffer6Height: "6em",
-    buffer7:          "",  buffer7Height: "6em",
-    buffer8:          "",  buffer8Height: "6em",
-    buffer9:          "",  buffer9Height: "6em",
-    bufferToggle0:    true,
-    bufferToggle1:    true,
-    bufferToggle2:    true,
-    bufferToggle3:    true,
-    bufferToggle4:    true,
-    bufferToggle5:    true,
-    bufferToggle6:    true,
-    bufferToggle7:    true,
-    bufferToggle8:    true,
-    bufferToggle9:    true,
-    logItems:         0,
-    bottom:           false,
-    models:           [],
+  const defaultContext = { // defaults for all global variables replaced by local storage as changed
+    contextAry:             [],
+    contextIdx:             0,
+    previousPrompts:        "",  previousPromptsHeight:        "2em",
+    repeatingContext:       "",  repeatingContextHeight:       "1em",
+    currentContext:         "",  currentContextHeight:         "2em",
+    sourceText:             "",  sourceTextHeight:             "6em",
+    currentChunk:           "",  currentChunkHeight:           "4em",
+    simplifiedChunk:        "",  simplifiedChunkHeight:        "4em",
+    combinedSimplifiedText: "",  combinedSimplifiedTextHeight: "8em",
+    chunkSize:              500,
+    chunkSeparator:         " ",
+    chunkTotal:             1,    // ( length / chunkSize )
+    chunkCount:             0,   
+    model:                  "gpt=3.5-turbo",
+    endpoint:               "",
+    isMarkChunk:            true,
+    isShowSizes:            false,
+    bufferTitle0:           "",
+    bufferTitle1:           "",
+    bufferTitle2:           "",
+    bufferTitle3:           "",
+    bufferTitle4:           "",
+    bufferTitle5:           "",
+    bufferTitle6:           "",
+    bufferTitle7:           "",
+    bufferTitle8:           "",
+    bufferTitle9:           "",
+    buffers:                0,
+    buffer0:                "",  buffer0Height: "6em",
+    buffer1:                "",  buffer1Height: "6em",
+    buffer2:                "",  buffer2Height: "6em",
+    buffer3:                "",  buffer3Height: "6em",
+    buffer4:                "",  buffer4Height: "6em",
+    buffer5:                "",  buffer5Height: "6em",
+    buffer6:                "",  buffer6Height: "6em",
+    buffer7:                "",  buffer7Height: "6em",
+    buffer8:                "",  buffer8Height: "6em",
+    buffer9:                "",  buffer9Height: "6em",
+    bufferToggle0:          true,
+    bufferToggle1:          true,
+    bufferToggle2:          true,
+    bufferToggle3:          true,
+    bufferToggle4:          true,
+    bufferToggle5:          true,
+    bufferToggle6:          true,
+    bufferToggle7:          true,
+    bufferToggle8:          true,
+    bufferToggle9:          true,
+    logItems:               0,
+    bottom:                 false,
     dragables: {
       log:      {  width:  400,  height: 600,  top: 10,  left: 10 },
       settings: {  width:  400,  height: 600,  top: 20,  left: 20 },
       diff:     {  width:  800,  height: 300,  top: 40,  left: 40 },
       batch:    {  width:  400,  height: 300,  top: 40,  left: 40 },
       help:     {  width:  800,  height: 300,  top: 40,  left: 40 }
-    }
+    },
+    models:                 []
   } 
   let context = {};
   
@@ -103,19 +107,23 @@
     { model: "tts-1-hd-1106"               , target: "audio", input: "$0.01      ", output: "$0.01     ", units: "1k", asOf: "" }
   ];  
 
-  let validModels = [];
-  let machineState = "";
+  let validModels     = [];
+  let machineState    = "";
+  let previousState   = "";
   let machineStateAll = "";
-  let isContinue = false; 
-  let candidate  = "";
-  let sourceText = ""; 
-  let chunkN = 0;
-  let thisChunk = "";
-  let sourceInp;  
-  let currentInp; 
-  let simpleChunk;
+  let isContinue      = false; 
+  let candidate       = "";
   
-  let dummy = [];
+  // references to UI elements
+    let previousPromptsObj        = {};
+    let repeatingContextObj       = {};
+    let currentContextObj         = {};  
+    let sourceTextObj             = {};
+    let currentChunkObj           = {};
+    let simplifiedChunkObj        = {};
+    let combinedSimplifiedTextObj = {};
+  
+  let dummy       = [];
   let fileContent = []; 
   let fileNames   = [];
   
@@ -135,7 +143,7 @@
     var thisModel, atr, tokens, price, costParm, cost;
 
     if( rep ) {          // include repeating context in cost
-      rptCost = $( '#repeatingContext' ).val();
+      rptCost = repeatingContextObj.value;
     }
 
     var srcCost = $( bufr ).val();
@@ -151,6 +159,11 @@
     cost = parseFloat( costParm.input.replace( "$", "" ) );
 
     tokens = String( ( ( srcCost.length ??= 0 ) + ( rptCost.length ??= 0 ) ) / 4 );
+    
+    if( context.contextAry.length > 1 ) { // multiply by number of prompts
+      tokens = tokens *= context.contextAry.length;
+    }
+    
     price = Number.parseFloat( ( tokens * cost ) / 1000  ).toFixed( 6 );
     return [ tokens, price ];
   }
@@ -177,6 +190,7 @@
 
     for( var itm in list ) {
       $( "#" + list[ itm ] ).val( "" );
+      context[ itm ] = "";
     }
   }
 
@@ -185,17 +199,19 @@
   }
  
   function completePrev() {                          /** Before moving to next step, save results of previous after a pause */
-    document.getElementById( "thisChunk" ).value = thisChunk;
-    var [ tokens, price ] = assessCost( "#thisChunk", true, false );
-    var [ oTokens, oPrice ] = assessCost( "#simpleChunk", false, true );
+    currentChunkObj.value = context.currentChunk;
+    var [ tokens, price ] = assessCost( "#currentChunk", true, false );
+    var [ oTokens, oPrice ] = assessCost( "#simplifiedChunk", false, true );
     toast( `Completed chunk: ${context.chunkCount} with ${tokens} input tokens at cost ${price} 
             plus ${oTokens} output tokens at ${oPrice}.`, "Progress" );
-    sourceText = sourceText.substring( thisChunk.length + 1 );
-    sourceInp.value = sourceText;
+    document.getElementById( "chunksComplete").innerText = context.chunkCount;
+    context.sourceText = context.sourceText.substring( context.currentChunk.length + 1 );
+    sourceTextObj.value = context.sourceText;
     
-    if( candidate.length > 10 ) {
-    document.getElementById( "target" ).value += candidate;
-    candidate = "";
+    if( candidate.length > 1 ) {
+      combinedSimplifiedTextObj.value += candidate;
+      context.combinedSimplifiedText += candidate
+      candidate = "";
     }          
   }
 
@@ -207,10 +223,13 @@
       dragElement(  document.getElementById( "diff"     ) );
       dragElement(  document.getElementById( "batch"    ) );
     
-    sourceInp     = document.getElementById( "sourceText"  );
-    currentInp    = document.getElementById( "thisChunk"   );
-    simpleChunk   = document.getElementById( "simpleChunk" );
-
+    repeatingContextObj        = document.getElementById( "repeatingContext"       ); 
+    currentContextObj          = document.getElementById( "currentContext"         );
+    sourceTextObj              = document.getElementById( "sourceText"             );    
+    currentChunkObj            = document.getElementById( "currentChunk"           );
+    simplifiedChunkObj         = document.getElementById( "simplifiedChunk"        );
+    combinedSimplifiedTextObj  = document.getElementById( "combinedSimplifiedText" );
+   
     init();
 
     $( '.dragable' ).on( 'click', toHigher );
@@ -232,11 +251,11 @@
     }
   }
 
-  function getContext() {                            /** Retrieve variables from local storage */    
+  async function getContext() {                      /** Retrieve variables from local storage update UI */    
     let storedContext = {};
     context = defaultContext;
     context.models = defaultModels;
-    let contextString = localStorage.getItem( "openAiContext" );
+    let contextString = await localStorage.getItem( "openAiContext" );
    
     if( contextString ) {
       storedContext = JSON.parse( contextString ); 
@@ -268,6 +287,12 @@
           
           case "chunkSeparator":
             $( "#" + attr ).val( context.chunkSeparator ) /*.change()*/ ;
+            break;
+            
+         case "currentContext":
+            context.contextAry = context.repeatingContext.replace( /\n/g, "" ).split( "---" );
+            context.contextIdx = 0;
+            document.getElementById( attr ).value = context.contextAry[ 0 ];
             break;
             
           case "isMarkChunk":  
@@ -316,9 +341,9 @@
           case "previousPrompts": // These have height attributes that may change
           case "repeatingContext":
           case "sourceText":
-          case "thisChunk":
-          case "simpleChunk":
-          case "target":
+          case "currentChunk":
+          case "simplifiedChunk":
+          case "combinedSimplifiedText":
           case "buffer0":
           case "buffer1":
           case "buffer2":
@@ -398,7 +423,7 @@
     startStop( "play next", "pause redo cancel" );
   }
   
-  function initBatch( id ) {
+  function initBatch( id ) {                         /**  */
     toggle( id );
     
     if( $( '#textFile' ).val().length > 0 ) {
@@ -407,7 +432,7 @@
       startStopAll( "", "play next pause cancel" );
     }
     
-    document.getElementById( "fileProgress" ).value = 0;
+    setProgress( "fileProgress", 0 );
   }
   
   function initModels() {                            /** Get valid openai models */
@@ -435,19 +460,29 @@
     } );
   }
 
+  function chunksLeft() {                            /**  */
+    return  parseInt( Math.max( context.sourceText.split( " " ).length / context.chunkSize, 0 ) )
+  }
+  
   function initStepper() {                           /** Set up the first chunk */
+    context.contextIdx = 0;
+    currentContextObj.value = context.contextAry[ context.contextIdx ];
     isContinue = true;
     toast( "Init Stepper.", "Progress" );
     startStop( "cancel pause", "play next redo" );
-    clearChunks( "thisChunk simpleChunk target" );
-
-    sourceText = sourceInp.value;
-    chunkN = parseInt( Math.max( sourceText.split( " " ).length / context.chunkSize, 1 ) );
-    context.chunkCount = 0;
-    document.getElementById( "chunkProgress" ).value = 0;
-    thisChunk = "";
+    resetChunks();
   }
 
+  function resetChunks() {                           /**  */
+    clearChunks( "currentChunk simplifiedChunk combinedSimplifiedText" );
+    context.sourceText = sourceTextObj.value;
+    context.chunkTotal = parseInt( ( context.sourceText.split( " " ).length / context.chunkSize ) + 1 );
+    context.chunkCount = 0;
+    setProgress( "chunkProgress", 0 );
+    document.getElementById( "chunksComplete" ).innerText = 0;
+    context.currentChunk = "";
+  }
+  
   async function loadFile( files ) {                 /** Capture list of files, download them and list in textarea */
 //    var tgt = document.getElementById( 'textFile' );
 //    var fn = document.getElementById( 'fileName' );
@@ -463,13 +498,14 @@
   }
 
   function markState( txt ) {                        /** Set overall machine state to control action buttons */
+    previousState = machineState;
     machineState = txt;
     toast( txt, "Progress" );
   }
   
-  function markStateAll( txt ) {                        /** Set overall machine state to control action buttons */
+  function markStateAll( txt ) {                     /** Set overall machine state to control action buttons */
     machineStateAll = txt;
-    toastWho( "#toasterAl", txt, "Progress" );
+    toastWho( "#toasterAll", txt, "Progress" );
   }
 
   function next() {                                  /** Resume processing next chunk */
@@ -498,23 +534,24 @@
    
   function nextStep() {                              /** Set up the next chunk */
     toast( "Next Step.", "Progress" );
+    document.getElementById( "chunksComplete" ).innerText = context.chunkCount;
     context.chunkCount += 1;
 
-    let pos = sourceText.split( " ", context.chunkSize ).join( " " ).length;
+    let pos = context.sourceText.split( " ", context.chunkSize ).join( " " ).length;
 
     if( pos < 0 ) {  // if no delimiter then send whole chunk
-      thisChunk = sourceText;
+      context.currentChunk = context.sourceText;
     } else {
-      thisChunk = sourceText.substring( 0, pos );        
+      context.currentChunk = context.sourceText.substring( 0, pos );        
     }
    
-    let separatorPosition = thisChunk.lastIndexOf( context.chunkSeparator );
+    let separatorPosition = context.currentChunk.lastIndexOf( context.chunkSeparator );
 
     if( separatorPosition >= 0 ) { // backup to separator
-      thisChunk.substring( 0, separatorPosition );
+      context.currentChunk.substring( 0, separatorPosition );
     }
     
-    currentInp.value = thisChunk;
+    currentChunkObj.value = context.currentChunk;
   }
 
   function pause() {                                 /** Interrupt simplification */
@@ -540,12 +577,14 @@
 
     if( ! isContinue ) {
       initStepper();
+      showCurrentContext();
       simplifyProcess();
     }    
   }
   
   async function playAll() {                         /** Initiate processing of all files in list */
     var fileCount = 0;
+    document.getElementById( "filesComplete" ).innerText = fileCount;
     
     for( fileIdx in fileNames ) {
       isLooping = true;
@@ -588,7 +627,9 @@
         }
       }
       
-      document.getElementById( "fileProgress" ).value = parseInt( ( ( fileCount / fileNames.length ) ) * 100 );
+//      var filesComplete = parseInt( ( fileCount / fileNames.length ) );
+      document.getElementById( "filesComplete" ).innerText = fileCount;
+      setProgress( "fileProgress", parseInt( ( ( fileCount / fileNames.length ) ) * 100 ) );
 //      document.getElementById( "fileNumber" ).innerText = fileIdx + 1;
 
     }
@@ -608,23 +649,25 @@
   
   async function processStep() {                     /** Call chatgpt with request and wait for response */
     showSizes();
-    toast( `Simplifying chunk: ${context.chunkCount} of  ${chunkN} chunks.`, "Progress" );   
+    toast( `Simplifying chunk: ${context.chunkCount} of  ${context.chunkTotal} chunks.`, "Progress" );   
     document.getElementById( "chunkNumber" ).innerText = context.chunkCount;
-    document.getElementById( "chunkProgress" ).value = parseInt( ( context.chunkCount / chunkN ) * 100 );
+    setProgress( "chunkProgress", parseInt( ( context.chunkCount / context.chunkTotal ) * 100 ) );
     
-    await simplifyText( thisChunk, context.chunkCount );  
+    await simplifyText( context.currentChunk, context.chunkCount );  
   }
   
   function redo() {                                  /** Reprocess current chunk */                          
     markState( "Redoing" );
-    clearChunks( "simpleChunk" );    
+    clearChunks( "simplifiedChunk" );    
     startStop( "pause cancel", "play next redo" );
     setError( "" );
   }
   
   function removeLocalStorage() {                    /** Confirm user wants to reset app to initial conditions (keeping API key) */
-    if( window.confirm( "Warning: This will remove all locally stored data except API Key." ) ) {
+    if( window.confirm( "Warning: This will remove all locally stored data and and reset to default values except API Key." ) ) {
       localStorage.removeItem( 'openAiContext' );
+      sleep( 1000 );
+      context = [];
       init();
       toast( "Reset", "Complete" );
     } else {
@@ -653,21 +696,31 @@
   
   function saveContext( attr, val ) {                /** Save all persistent variables in localstorage */    
     markState( "Saving" );
+    toast( `SaveContext: ${attr}`, "Progress" );
 
     if( attr ) {
       switch( attr ) {  
         case "chunkSize":
-          document.getElementById( "chunkSizeValue" ).innerText = val; // this is a span
+          document.getElementById( "chunkSizeValue" ).innerText = val;           // this is a span
           break;
         
         case "chunkSeparator":
-          context.chunkSeparator = $('#chunkSeparator').find(":selected").val();
+          context.chunkSeparator = $('#chunkSeparator').find(":selected").val(); // select drop down
           break;
           
         case "model":
-          context.model = $( '#model' ).val();
+          context.model = $( '#model' ).val();                                   // select drop down
           break;
 
+        case "repeatingContext":
+          context.repeatingContext = repeatingContextObj.value       // textarea  
+          context.contextAry = context.repeatingContext.replace( /\n/g, "" ).split( "---" );
+          context.contextIdx = 0
+          currentContextObj.value = context.contextAry[ context.contextIdx ]
+          showCurrentContext();
+
+          break;
+          
         case "sourceText":
           startStop( "play next", "pause cancel redo" );
           break;
@@ -1164,9 +1217,23 @@ Depending on your schedule, this is a good point to take a break. The first part
      }
   }
   
+  function setProgress( bar, pct ) {                 /**  */
+    var cur = document.getElementById( bar );
+    cur.value = pct;
+  }
+  
+  function showCurrentContext() {                    /**  */
+    if( context.contextAry.length > 1 ) {
+      $( "#currentContextScope" ).show();
+    } else {
+      $( "#currentContextScope" ).hide();
+    }  
+  }
+  
   function showSizes() {                             /** Keep the sizes as well as content of buffers */
     var bufferNames = [ 
-        "sourceText", "repeatingContext", "thisChunk", "simpleChunk", "target",
+        "sourceText", "repeatingContext", "currentContext", "currentChunk", "simplifiedChunk", 
+        "combinedSimplifiedText",
         "buffer0", "buffer1", "buffer2", "buffer3", "buffer4", 
         "buffer5", "buffer6", "buffer7", "buffer8", "buffer9" 
     ];
@@ -1175,7 +1242,7 @@ Depending on your schedule, this is a good point to take a break. The first part
       var bufName = "#" + bufferNames[ bufId ];
       var bufTxt =   "";
       
-      if( context.isShowSizes ) {
+      if( context.isShowSizes.indexOf( "on" ) >= 0 ) {
         var bufLen =  $( bufName ).val().length;
         
         if( bufLen > 0 ) {
@@ -1195,11 +1262,15 @@ Depending on your schedule, this is a good point to take a break. The first part
         case "Initing":
           break;
         
+        case "Saved":
+          markState( previousState );
+          break;
+          
         case "Idling":
           break;
 
         case "Stepping":
-          if( sourceText.length > 0 ) {
+          if( context.sourceText.length > 0 ) {
             nextStep();
             await processStep();
             markState( "Pausing" );
@@ -1221,12 +1292,26 @@ Depending on your schedule, this is a good point to take a break. The first part
             completePrev();
           }
 
-          if( sourceText.length > 0 ) {
+          if( context.sourceText.length > 0 ) {
             nextStep();
             await processStep();
-          }else {
-            markState( "Completing" );
-            isContinue = false;
+          }else {                              // at end so check for continuation prompt
+            if( context.contextAry.length > 1 &&
+                context.contextIdx < ( context.contextAry.length - 1 ) ) {
+              context.contextIdx += 1;
+              context.currentContext = context.contextAry[ context.contextIdx ];
+              currentContextObj.value = context.currentContext
+              
+              context.combinedSimplifiedText = combinedSimplifiedTextObj.value; 
+              context.sourceText = context.combinedSimplifiedText;
+              sourceTextObj.value = context.sourceText; 
+              
+              context.combinedSimplifiedText = "";
+              combinedSimplifiedTextObj.value = "";
+            } else {
+              markState( "Completing" );
+              isContinue = false;
+            }
           }
           break        
           
@@ -1254,13 +1339,18 @@ Depending on your schedule, this is a good point to take a break. The first part
         isContinue = false;
         startStop( "", "play pause next redo cancel" ); 
         toast( "End of Text.", "Complete" );
-//        setError( "End Of Text" );
     }
     
-    startStop( "play next", "pause redo cancel" );
-    showSizes();
-    await sleep( 1000 );
-    markState( "Idling" );
+    if( context.contextAry.length > 1 &&
+        context.contextIdx < ( context.contextAry.length - 1 ) ) {
+      context.contextIdx += 1;
+      currentContextObj.value = context.contextAry[ context.contextIdx ]; 
+    } else {
+      startStop( "play next", "pause redo cancel" );
+      showSizes();
+      await sleep( 1000 );
+      markState( "Idling" );
+    }
   }
 
   async function simplifyText( text, chunkCount ) {  /** Invoke chat-gpt */
@@ -1286,7 +1376,7 @@ Depending on your schedule, this is a good point to take a break. The first part
         "temperature":   Number( $( '#temperature' ).val() ), // default to 0.2
         "messages": [ {
            "role":       "user", 
-           "content":    context.repeatingContext + " " + text
+           "content":    context.currentContext + " " + text
          } ] 
        } )
     } )
@@ -1307,8 +1397,8 @@ Depending on your schedule, this is a good point to take a break. The first part
           sep = "\n\n---" + chunkCount + "---\n\n";
         }
       
-        document.getElementById( "simpleChunk" ).value = data.choices[0].message.content;
-        document.getElementById( "simpleChunkNumber" ).innerText = chunkCount;
+        simplifiedChunkObj.value = data.choices[0].message.content;
+        document.getElementById( "simplifiedChunkNumber" ).innerText = chunkCount;
         candidate = sep + data.choices[0].message.content;
       }
     } )
