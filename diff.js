@@ -52,8 +52,10 @@ html_to_tokens = function (html) {
   mode = "char";
   current_word = "";
   words = [];
+  
   for (i = 0, len = html.length; i < len; i++) {
     char = html[i];
+    
     switch (mode) {
       case "tag":
         if (is_end_of_tag(char)) {
@@ -69,6 +71,7 @@ html_to_tokens = function (html) {
           current_word += char;
         }
         break;
+        
       case "char":
         if (is_start_of_tag(char)) {
           if (current_word) {
@@ -91,30 +94,35 @@ html_to_tokens = function (html) {
           current_word = char;
         }
         break;
+        
       case "whitespace":
-        if (is_start_of_tag(char)) {
-          if (current_word) {
-            words.push(current_word);
+        if( is_start_of_tag( char ) ) { 
+          if( current_word ) {
+            words.push( current_word );
           }
+          
           current_word = "<";
           mode = "tag";
-        } else if (is_whitespace(char)) {
+        } else if( is_whitespace( char ) ) {
           current_word += char;
         } else {
-          if (current_word) {
-            words.push(current_word);
+          if( current_word ) {
+            words.push( current_word );
           }
           current_word = char;
           mode = "char";
         }
         break;
+        
       default:
         throw new Error(`Unknown mode ${mode}`);
     }
   }
-  if (current_word) {
-    words.push(current_word);
+  
+  if( current_word ) {
+    words.push( current_word );
   }
+  
   return words;
 };
 
@@ -490,7 +498,8 @@ if (typeof define === "function") {
   define([], function () {
     return diff;
   });
-} else if (typeof module !== "undefined" && module !== null) {
+} else if( typeof module !== "undefined" && 
+           module !== null ) {
   module.exports = diff;
 } else {
   this.htmldiff = diff;
@@ -498,106 +507,20 @@ if (typeof define === "function") {
 
 // DIFF ACTION
 
-let originalHTML = `
-<p class="bold">
-  Gordon steps out. The overhead lights come on. Batman is behind him. The Joker
-  blinks in the harsh white light.
-</p>
-
-<p>
-  WHAM! The Joker's face hits the table- comes up for air-CRACK! CRACK! To the
-  head. Batman is in front of him. The Joker stares, fascinated. Bleeding.
-</p>
-
-<p>
-  JOKER: Never start with the head, the victim gets all fuzzy. He can't feel the
-  next-
-</p>
-
-<p  class="blockquote">
-  CRACK! Batman's fist smacks down on the Joker's fingers.
-</p>
-<p>
-  JOKER (calm): See?
-</p>
-<p>
-  Batman: You wanted me. Here I am.
-</p>
-<p>
-  JOKER: I wanted to see what you'd do...and you didn't disappoint. You let 5
-  people die. Then you let Dent take your place. Even to a guy like me, that's
-  cold.
-</p>
-<p>
-  JOKER: Those mob fools want you dead so they can get back to the way things
-  were. But I know the truth: there's no going back. You've changed things.
-  Forever.
-</p>
-<p>
-  BATMAN: Then why do you want to kill me?
-</p>
-<p class="blockquote">
-  The Joker starts laughing. After a moment he's laughing so hard it sounds like
-  sobbing.
-</p>
-`;
-
-let newHTML = `<p class="bold">
-  Gordon walks out and lights a cigar. The overhead lights come on. Batman is behind him.
-</p>
-
-<p>
-  WHAM! The Joker's face hits the table- comes up for air-CRACK! CRACK! To the
-  head. Batman is in front of him. The Joker stares, fascinated. Bleeding.
-</p>
-
-<p>
-  JOKER: Never start with the head, the victim gets all fuzzy. He can't feel the
-  next-
-</p>
-
-<p class="blockquote">
-  CRACK! Batman's fist smacks down on the Joker's fingers.
-</p>
-<p>
-  JOKER (calm): See?
-</p>
-<p>
-  Batman: You wanted me. Here I am.
-</p>
-<p>
-  JOKER: I wanted to see what you'd do...and you didn't disappoint. You let 5
-  people die. Then you let Dent take your place. Even to a guy like me, that's
-  cold.
-</p>
-<p>
-  BATMAN: Where's Dent?
-</p>
-<p>
-  JOKER: Those mob fools want you dead so they can get back to the way things
-  were. But I know the truth: there's no going back. You've changed things.
-  Forever.
-</p>
-<p class="blockquote">
-  The Joker starts laughing. After a moment he's laughing so hard it sounds like
-  sobbing.
-</p>
-`;
-
 // Diff HTML strings
 
 function diffBuffers() {
   var orgTextBuffer = $( '#orgBuffer' ).find( ":selected" ).val();
   var orgTxt =  $( `#${orgTextBuffer}` ).val();
-//var orgTxt = originalHTML;
 
   var changedTextBuffer = $( '#changedBuffer' ).find( ":selected" ).val();
   var newTxt = $( `#${changedTextBuffer}` ).val();
-//var newTxt = newHTML;
+  setCopies();
   doDiff( orgTxt, newTxt );
+  toast( `Compared: ${orgTextBuffer} to ${changedTextBuffer} `, 'Complete' )
 }
 
-function detag( txt ) {
+function detag( txt ) { /** all html is made plain text except '<ins></ins> and <del></del> for highlighting */
   var v1 = txt.replace( /&lt;ins&gt;/g,   "<ins>" );
   var v2 = v1.replace(  /&lt;\/ins&gt;/g, "</ins>" );
   var v3 = v2.replace(  /&lt;del&gt;/g,   "<del>" );
