@@ -4,7 +4,7 @@
     margin: 0;
   }
     
-  header, button {
+  header, button, .hdr {
     background-color: #31ADE3;
     color:            white;
     padding:          5px;
@@ -59,11 +59,22 @@
   }
     
   .blk {
-    position: relative;
+    position:      relative;
     padding-right: 10px;
-    border:none
+    border:        none;
+    float:         left;
   }
   
+/*  .sash {
+    height:   2in;
+    width:    10px;
+    border:   none;
+    cursor:   col-resize;
+    overflow: none;
+    padding:  5px;
+    position: relative;
+  }
+*/  
   .edt {
     width: 5em;
   }
@@ -74,13 +85,13 @@
   
   .title {
     margin: 0;
-    padding-top: 0.7em;
+    padding: 0.6em;
   }
       
   .sidebyside {
     box-sizing: content-box;
-    width: 48%;
-    border: none;
+    width:      48%;
+    border:     none;
   }
 
   .logBody, .helpBody, .settingsBody, .diffBody, .batchBody {
@@ -89,10 +100,10 @@
     border:            none;
     margin:            0;
     overflow:          auto;
-    padding-left:      5px;
+    padding:      10px;
     height:            calc( 100% - 0.5in );
   }
-  
+    
   .logPage, .settingsPage, .helpPage, .diffPage, .batchPage {
     position:         absolute;
     width:            5.5in;
@@ -118,7 +129,9 @@
   }
   
   .botm { 
-    border: thin solid grey;
+    border: thin solid white;
+    border-radius: 5px;
+    b/ackground: lightgrey;
     margin-right: 3px;
   }
 
@@ -134,6 +147,11 @@
     margin: 3px;
   }
 
+  .diff {
+    margin:  -3px 0 -3px 0;
+    padding: 0;
+  }
+  
   .dragable {
     display:          none;
     position:         fixed;
@@ -141,7 +159,9 @@
     left:             25%;
     z-index:          1000;
     height:           40%;
+    min-height:       1in;
     width:            8in;
+    min-width:        1in;
     border:           thin solid grey;
     border-radius:    5px;
     background-color: white;
@@ -152,6 +172,10 @@
     box-sizing:       border-box;
   }
 
+  #currentContextScope {
+    display: none;
+  }
+  
   .hdr {
     border-bottom: thin solid grey;
     padding-right: 5px;
@@ -178,17 +202,32 @@
     width: 100%;
     padding: 5px;
     margin: 2px;
+    overflow: hidden
   }
 
+  .diffs {
+    overflow: hidden;
+    height: 100%;
+  }
+  
   .flxrow {
     display: flex;
     border: none;
+    overflow: none;
+    position: relative;
+    width: 100%
   }
 
   .cols {
     flex: 1;
   }
-
+  
+  .gutter {
+    flex: 0;
+    width: 0.01in;
+    border: none;
+  }
+  
   .bufferTitle {
     border: thin solid lightgrey;
     border-radius: 5px;
