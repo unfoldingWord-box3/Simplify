@@ -24,7 +24,7 @@
             <td style="text-align: right;" > 
               <span data-text='Show differences'    class='tooltip'> <i class='fas fa-clone'     onclick="toggle(    '#diff'     )" > </i> </span>
               <span data-text='Show event log'      class='tooltip'> <i class='fas fa-list'      onclick="toggle(    '#log'      )" > </i> </span>
-              <span data-text='Show model settings' class='tooltip'> <i class='fas fa-cog'       onclick="toggle(    '#settings' )" > </i> </span>
+              <span data-text='Show model settings' class='tooltip'> <i class='fas fa-cog'       onclick="toggle(    '#settings' )" > </i> </span -->
               <span data-text='Batch Process Files' class='tooltip'> <i class='fas fa-bolt'      onclick="initBatch( '#batch'    )" > </i> </span>
               <span data-text='Offer help'          class='tooltip'> <i class='fas fa-info'      onclick="toggle(    '#help'     )" > </i> </span>
             </td>
@@ -115,13 +115,16 @@
           <h3> Current Chunk <span id="chunkNumber" ></span> <span id="currentChunkSize" ></span> </h3>   
           <textarea id="currentChunk" class="textBox resizable" 
                     onchange="saveContext( 'currentChunk', this.value )" 
-                    onmouseup="$( '#simplifiedChunk' ).height( $( '#currentChunk' ).height() );"></textarea> <br>
+                    onmouseup="$( '#simplifiedChunk, .sash' ).height( $( '#currentChunk' ).height() );"></textarea> <br>
         </div> 
+        
+        <!-- div id='sash' class='sash blk dragable sashheader'> </div -->
+        
         <div class="cols blk sidebyside"> 
           <h3> Simplified Chunk <span id="simplifiedChunkNumber" > </span> <span id="simplifiedChunkSize" ></span> </h3>   
           <textarea id="simplifiedChunk" class="textBox resizable" 
                     onchange="saveContext( 'simplifiedChunk', this.value )"
-                    onmouseup="$( '#currentChunk' ).height( $( '#simplifiedChunk' ).height() )"></textarea> <br>
+                    onmouseup="$( '#currentChunk, .sash' ).height( $( '#simplifiedChunk' ).height() )"></textarea> <br>
         </div>       
       </div>
       
@@ -132,8 +135,10 @@
       </div> <br>
       
       <div class="blk bufferGroup clear">
-        <h3> Buffers </h3>
-        <ol>
+        <h3> Buffers 
+          <input name='buffered' type='checkbox' onclick='toggle("#buffed")' checked > 
+        </h3>  
+        <ol id='buffed'>
           <li>
               <div class="buffer" id="b0">
                 <input    type="text" class="bufferTitle"            id="bufferTitle0" value="" onchange="saveContext( 'bufferTitle0', this.value )">  
@@ -295,6 +300,7 @@
           <tr class="hdr" >
             <th> <h3 id="settingsheader" class="title" > Manage Models </h3> </th>
             <th class='actions' > 
+              <!-- button onclick='scrapeModel()' > Update Model </button -->
               <i class='fas fa-window-close' onclick="toggle( '#settings' )"       ></i> 
             </th>
           </tr>
@@ -314,65 +320,69 @@
           <tbody id='modelSettingsBody' contentEditable >
           </tbody>
         </table>  
+        
       </div>        
-    </div>        
+    </div -->        
 
     <div id="diff"     class="diffPage     dragable" >
       <table width="100%" >
         <tbody>
           <tr class='hdr'>
-            <th> <h3 id="diffheader" class="title" > Difference of 2 Buffers </h3> </th>
+            <th> <h3 id="diffheader" class="title" > Difference between <em id='orgBufferSelection' ></em> and 
+                                                                        <em id='changedBufferSelection' ></em> Buffers </h3> </th>
             <th class='actions' > 
-              <span data-text='Generate difference view' class='tooltip' > <button onclick='diffBuffers()'> Diff </button> </span>
-              <span data-text='Close this window'        class='tooltip' > <i class='fas fa-window-close' onclick="toggle( '#diff' )"       ></i> </span>
+              <!-- span data-text='Generate difference view' class='tooltip diff' > <button onclick='diffBuffers()'> Diff </button> </span -->
+              <span data-text='Close this window'        class='tooltip'      > <i class='fas fa-window-close' onclick="toggle( '#diff' )" ></i> </span>
             </th>
           </tr>
         </body>
       </table>
       <div class='diffBody'>
-          <div class="row">
-            <div class="col">
-              <span>Original Document 
-                <select id='orgBuffer' style='width: 10em;' >
-                  <option value='sourceText'            > Source Text      </option>   
-                  <option value='currentChunk' selected > Current Chunk    </option> 
-                  <option value='simplifiedChunk'       > Simplified Chunk </option> 
-                  <option value='combinedSimplifiedText'> Combined Text    </option> 
-                  <option value='b0'                    > Buffer 1         </option> 
-                  <option value='b1'                    > Buffer 2         </option> 
-                  <option value='b2'                    > Buffer 3         </option> 
-                  <option value='b3'                    > Buffer 4         </option> 
-                  <option value='b4'                    > Buffer 5         </option> 
-                  <option value='b5'                    > Buffer 6         </option> 
-                  <option value='b6'                    > Buffer 7         </option> 
-                  <option value='b7'                    > Buffer 8         </option> 
-                  <option value='b8'                    > Buffer 9         </option> 
-                  <option value='b9'                    > Buffer 10        </option>
+          <div class="flxrow">
+            <div class="cols textBox diffs">
+              <span>Original Document
+                <select id='orgBuffer' style='width: 10em;'  onchange='setCopy( "orgBuffer" )'>
+                  <option value='sourceText'             > Source Text      </option>   
+                  <option value='currentChunk' selected  > Current Chunk    </option> 
+                  <option value='simplifiedChunk'        > Simplified Chunk </option> 
+                  <option value='combinedSimplifiedText' > Combined Text    </option> 
+                  <option value='buffer0'                > Buffer 1         </option> 
+                  <option value='buffer1'                > Buffer 2         </option> 
+                  <option value='buffer2'                > Buffer 3         </option> 
+                  <option value='buffer3'                > Buffer 4         </option> 
+                  <option value='buffer4'                > Buffer 5         </option> 
+                  <option value='buffer5'                > Buffer 6         </option> 
+                  <option value='buffer6'                > Buffer 7         </option> 
+                  <option value='buffer7'                > Buffer 8         </option> 
+                  <option value='buffer8'                > Buffer 9         </option> 
+                  <option value='buffer9'                > Buffer 10        </option>
                 </select>
+              <span data-text='Generate difference view' class='tooltip diff' > <button onclick='diffBuffers()'> Diff </button> </span>
                 <hr>
                </span>
                <div class="card system-generated" id="outputNew"></div>
             </div>
-            
-            <div class="col">
-              <span> Document with changes 
-                <select id='changedBuffer' style='width: 10em;' >
-                  <option value='sourceText'           > Source Text      </option>   
-                  <option value='thisChunk'            > Current Chunk    </option> 
-                  <option value='simpleChunk' selected > Simplified Chunk </option> 
-                  <option value='target'               > Combined Text    </option> 
-                  <option value='b0'                   > Buffer 1         </option> 
-                  <option value='b1'                   > Buffer 2         </option> 
-                  <option value='b2'                   > Buffer 3         </option> 
-                  <option value='b3'                   > Buffer 4         </option> 
-                  <option value='b4'                   > Buffer 5         </option> 
-                  <option value='b5'                   > Buffer 6         </option> 
-                  <option value='b6'                   > Buffer 7         </option> 
-                  <option value='b7'                   > Buffer 8         </option> 
-                  <option value='b8'                   > Buffer 9         </option> 
-                  <option value='b9'                   > Buffer 10        </option>
-                </select>
-                <hr>
+            <!-- div class="col gutter"></div -->
+            <div class="cols textBox diffs">
+              <span> Document with changes  
+                <select id='changedBuffer' style='width: 10em;' onchange='setCopy( "changedBuffer" )' >
+                  <option value='sourceText'             > Source Text      </option>   
+                  <option value='currentChunk'           > Current Chunk    </option> 
+                  <option value='simplifiedChunk'        > Simplified Chunk </option> 
+                  <option value='combinedSimplifiedText'  
+                                                selected > Combined Text    </option> 
+                  <option value='buffer0'                > Buffer 1         </option> 
+                  <option value='buffer1'                > Buffer 2         </option> 
+                  <option value='buffer2'                > Buffer 3         </option> 
+                  <option value='buffer3'                > Buffer 4         </option> 
+                  <option value='buffer4'                > Buffer 5         </option> 
+                  <option value='buffer5'                > Buffer 6         </option> 
+                  <option value='buffer6'                > Buffer 7         </option> 
+                  <option value='buffer7'                > Buffer 8         </option> 
+                  <option value='buffer8'                > Buffer 9         </option> 
+                  <option value='buffer9'                > Buffer 10        </option>
+                </select> 
+                <hr style='margin: 19px 0 10px 0;' >
               </span>
               <div class="card current-document" id="output"></div>
             </div>
@@ -386,21 +396,42 @@
           <tr class='hdr'>
             <th> <h3 id="helpheader" class="title" > Simplify Information </h3> </th>
             <th class='actions' > 
-              <i class='fas fa-window-close' onclick="toggle( '#help' )"       ></i> 
+              <span data-text='Close this window' class='tooltip'> <i class='fas fa-window-close' onclick="toggle( '#help' )" ></i> </span>
             </th>
           </tr>
         </body>
       </table>
       <div class='helpBody'>
-        <p> The buttons on the Header, popup "modeless" dialog boxes that remain until you close them or refesh the application.
-            They can be moved around the application window by dragging the title.
-            Each dialog can be resized by dragging the bottom right hand corner of the dialog.
-            Scroll bars will be shown as necessary. 
-            All dialogs may be closed by clicking the <i class='fas fa-window-close' > </i> button at the top right hand corner of the dialog, 
-            or by clicking the header button again. </p>          
+        <h4> Purpose </h4>
+        <p> The purpose of the "Simplify" application is to produce transformed documents relieving 
+            editors from rework of documents with complicated changes. </p>
+        <h4> Methodology </h4>
+        <p> Currently, inexpensive Large Language Models (LLM) do not handle the processing of large documents well. 
+            This is a moving target, as models change frequently.
+            To mitigate this, source documents to be transformed, are broken into pieces called "Chunks".   
+            You set the chunk size in words. 
+            You also set a separator that breaks chunks at convenient points. An actual chunk is (chunk_size - words_to_last_separator.) 
+            Having established a "Prompt" the application attaches the prompt to each chunk and sends it to chatGpt.
+            Long prompts can be separated by "---" and each part will be processed as a separate prompt to each chunk.
+            The output of one simplification becomes the input to the next. 
+            Further, you can batch process local files and the same process will be applied.  
+            whole documents can be processed or just one chunk at a time as you refine your prompts.
+            There is no restriction on the prompts you can apply.              
+        </p>        
+        <h4> Popup Dialogs </h4>
+        <p> 
+          <ul>
+            <li> Clicking the buttons on the main header, will popup "modeless" dialog boxes that  remain until you close them or refresh the application. </li> 
+            <li> They can be moved around the application window by dragging the title.  </li> 
+            <li> Each dialog can be resized by dragging the bottom right hand corner of the dialog. </li> 
+            <li> Scroll bars will be shown as necessary. </li> 
+            <li> All dialogs may be closed by clicking the <i class='fas fa-window-close' > </i>  button at the top right hand corner of the dialog,   or by clicking the header button again. </li> 
+          </ul>
+        </p>          
         <p> The following are features and deficiencies of the current POC </p>
           <ul>
-            <li> <b> Features </b>
+            <li> 
+              <h4> Features </h4>
               <ol>
                 <li> Save previous Prompts. </li>
                 <li> Split doc into specified max word size Chunks 500 - 3000. </li>
@@ -416,32 +447,33 @@
                 <li> Batch process multiple local files in a folder. </li>
                 <li> Persist size and position of Dialogs. </li>
               </ol>
-            </li>simplifiedNumer
-            <li> <b> TBDs </b>
+            </li>
+            <li> 
+              <h4> TBDs </h4>
               <ol>  
-                <li> Traverse a file system for content to apply a prompt or set of prompts (Content COP.)</li>   
-                <li> Use a template to reformat content (Content COP.)</li> 
+                <li> Use filter criteria to Traverse a file system for content to apply a prompt or set of prompts (Content COP.) </li>   
+                <li> Use a template to reformat content (Content COP.) </li> 
                 <li> Backup to previous context. </li>
-                <li> Rotate through notion [doc]s folder. </li>
+                <li> Process notion [doc]s folder. </li>
                 <li> Save to [doc]-simplified.md. </li>
                 <li> Separate on page break. </li>
                 <li> Convert to Claude free version. </li>
                 <li> Add pipeline section like DSPy. </li>
-                <li> Make buffers hide-able </li>
                 <li> Track total session cost </li>
                 <li> Track cost todate </li>
                 <li> Support cost tracking reset (trip meter) </li>
-                <li>  </li>
+                <li> Scrape model cost from openApi </li>
               </ol>   
             </li>
           </ul>
              
         <p>To use this application: </p>
           <ul>
-            <li> <b> Configure the application </b> </li>
+            <li> 
+              <b> Configure the application </b> 
               <ol>
-                <li> Configure the application by getting an API Key. This involves setting up an OpenAI API Account. 
-                     There are two types of accounts. This app uses the API to access chatgpt.
+                <li> Activate the application by getting an API Key. This involves setting up an OpenAI API Account. 
+                     There are two types of accounts. This app uses the API to access chatGpt.
                   <ol>
                     <li> Create openAi account 
                       <ol>
@@ -495,7 +527,7 @@
                      This function does not remove your API key.
                      Before resetting, save any buffers or configuration settings in a scratch file so that you can easily restore them. </li>
               </ol>
- 
+            </li>
             <li> <b> Prepare Text  </b></li>
             <ol>
               <li> Open a document to be processed.</li>
@@ -541,19 +573,19 @@
                     <li> If you then click "Next"<i class='fas fa-step-forward' > </i> the application will process one chunk. 
                          It will not place result in Combined control until you press next again. This allows reprocessing a chunk. </li>
                     <li> If you press redo <i class='fas fa-redo' > </i> instead of Next, 
-                         application will reprocess the same chunk presumably after you tweaked the original or the prompt.</li>
+                         the application will reprocess the same chunk presumably after you tweaked the original or the prompt.</li>
                   </ul>
               </ol>
                       
             <li> <b> Comparison </b>
               <ol>
-                <li> This feature allows you to compare any 2 buffers. Use this to see what is different from one process to another </li>
+                <li> This feature allows you to compare any 2 buffers. Use this to see what is different from one prompt to another </li>
                 <li> To compare two buffers click the <i class='fas fa-clone' > </i> to display the Diff dialog. </li>
                 <li> Select two buffers to compare. </li>
                 <li> Click the <button>Diff</button> button. </li>
                 <li> You will see in the left window the unchanged text. </li>
                 <li> You will see in the right window the changes made to the text. Added text is highlighted in green. 
-                     Removed text is highlighted in red with an overstrike through the text. </li>
+                     Removed text is highlighted in red with an over strike through the text. </li>
               </ol> 
             </li>
               
@@ -581,8 +613,7 @@
             </li>
  
             <li> <b> Batch Processing </b>
-              <p> Once you  arrive at a good prompt that will work on a set of files, 
-                  you can use the batch processing feature to process them in succession. </p>
+              <p> Once you  arrive at a good prompt that will work on a set of files, you can use the batch processing feature to process them in succession. </p>
               <ol> 
                 <li> Click the <i class='fas fa-bolt' onclick="toggle( '#batch' )" ></i> to configure the process. 
                   <ol>
@@ -592,8 +623,7 @@
                     <li> Enter an optional "Pattern" to add just before the file extension in case source files are in downloads folder. </li>
                   </ol> </li>
                  <li> Click the <i class='fas fa-play' > </i> button to begin processing files listed above. </li>
-                 <li> Open Log <i class='fas fa-list' onclick="toggle( '#log' )" > </i> and 
-                      click Fast Forward <i class='fa fa-fast-forward btn-icon'></i> to watch document processing progress. </li>
+                 <li> Open Log <i class='fas fa-list' onclick="toggle( '#log' )" > </i> and  click Fast Forward <i class='fa fa-fast-forward btn-icon'></i> to watch document processing progress. </li>
                  <li> Wait for "Processing Complete" message in Batch dialog box. </li>
                  <li> Inspect files in downloads folder. </li>
                  <li> Move them to final destination. </li>
@@ -613,13 +643,10 @@
             <li> <b> Troubleshooting </b> 
               <p> Sometimes things don't go as you plan. This section attempts to help when things go wrong. </p>
               <ul> 
-                <li> There is a status indicator below the "Enter Source Text" area. 
-                     This will flash problems as they occur or indicate the current state of the app.
-                     Sometimes the information "flies by" too quickly. </li>
+                <li> There is a status indicator below the "Enter Source Text" area. This will flash problems as they occur or indicate the current state of the app. Sometimes the information "flies by" too quickly. </li>
                 <li> The log <i class='fa fa-list'></i> captures most activities during a session. You can display this to see more of what has happened. </li>
                 <li> You can clear the log by clicking the trash can <i class='fa fa-trash'></i> icon. </li>
-                <li> You can make the log display updates in real time by 
-                     checking the box before the fast forward <i class='fa fa-fast-forward'></i> can icon. </li>icon. </li>
+                <li> You can make the log display updates in real time by  checking the box before the fast forward <i class='fa fa-fast-forward'></i> can icon. </li>
                 <li> Some response codes you may see:
                   <table>
                     <tbody>
@@ -639,16 +666,14 @@
                       <tr><td> 500</td><td> System Error. Not your fault. Try again later.      </td></tr>
                       <tr><td> 503</td><td> System Overloaded. Not your fault. Try again later. </td></tr>
                     </tbody>
-                  </table>
-                  
+                  </table>               
                 </li>
                 <li> In general, 4XX errors mean that an API key is not recognized or that it cannot bill the account. </li> 
                 <li> 5XX errors are problems with the server being able to process your request. </li>                   
                 <li> Finally, contact the training department at unfoldingWord for further support information. </li>
               </ul>
             </li>
-          </ol>
-        
+          </ul>        
       </div>
     </div>
   </body>
