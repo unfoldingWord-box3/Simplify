@@ -51,11 +51,12 @@
     logItems:               0,
     bottom:                 false,
     dragables: {
-      log:      {  width:  400,  height: 600,  top: 10,  left: 10 },
-      settings: {  width:  400,  height: 600,  top: 20,  left: 20 },
-      diff:     {  width:  800,  height: 300,  top: 40,  left: 40 },
-      batch:    {  width:  400,  height: 300,  top: 40,  left: 40 },
-      help:     {  width:  800,  height: 300,  top: 40,  left: 40 }
+      log:      {  width:  400,  height: 600,  top: 10,  left:  10 },
+      settings: {  width:  400,  height: 600,  top: 20,  left:  20 },
+      diff:     {  width:  800,  height: 300,  top: 40,  left:  40 },
+      batch:    {  width:  400,  height: 300,  top: 40,  left:  40 },
+      help:     {  width:  800,  height: 300,  top: 40,  left:  40 },
+      sash:     {  width:   10,  height: 100,  top:  0,  left: 300 }
     },
     models:                 []
   } 
@@ -114,8 +115,7 @@
   let isContinue      = false; 
   let candidate       = "";
   
-  // references to UI elements
-    let previousPromptsObj        = {};
+  // references to oft used DOM elements
     let repeatingContextObj       = {};
     let currentContextObj         = {};  
     let sourceTextObj             = {};
@@ -155,17 +155,22 @@
     }
     
     thisModel = context.model;
-    costParm = context.models.find( ( { model } ) => model == thisModel );
-    cost = parseFloat( costParm.input.replace( "$", "" ) );
-
     tokens = String( ( ( srcCost.length ??= 0 ) + ( rptCost.length ??= 0 ) ) / 4 );
+    costParm = context.models.find( ( { model } ) => model == thisModel );
     
-    if( context.contextAry.length > 1 ) { // multiply by number of prompts
-      tokens = tokens *= context.contextAry.length;
+    if( costParm ) {
+      cost = parseFloat( costParm.input.replace( "$", "" ) );
+
+    
+      if( context.contextAry.length > 1 ) { // multiply by number of prompts
+        tokens = tokens *= context.contextAry.length;
+      } 
+    
+      price = Number.parseFloat( ( tokens * cost ) / 1000  ).toFixed( 6 );
+      return [ tokens, price ];
+    } else {
+      return [ tokens, 0 ];
     }
-    
-    price = Number.parseFloat( ( tokens * cost ) / 1000  ).toFixed( 6 );
-    return [ tokens, price ];
   }
 
   function bufferToggle( idx, val ) {                /** Toggle textarea visibility */
@@ -190,7 +195,7 @@
 
     for( var itm in list ) {
       $( "#" + list[ itm ] ).val( "" );
-      context[ itm ] = "";
+      context[ itm ] = ""; 
     }
   }
 
@@ -222,6 +227,7 @@
       dragElement(  document.getElementById( "settings" ) );
       dragElement(  document.getElementById( "diff"     ) );
       dragElement(  document.getElementById( "batch"    ) );
+//    dragElement(  document.getElementById( "sash"     ) );
     
     repeatingContextObj        = document.getElementById( "repeatingContext"       ); 
     currentContextObj          = document.getElementById( "currentContext"         );
@@ -233,9 +239,9 @@
     init();
 
     $( '.dragable' ).on( 'click', toHigher );
-    $( '.textBox'  ).on( 'resize', function() { scanSizes(); } );  
-  } );
-  
+    $( '.textBox'  ).on( 'mouseup', function() { scanSizes(); } ); 
+  } ) 
+    
   function estimateCost() {                          /** Display estimated cost of input tokens using current model and source text */
     if( context.model.length > 0 ) {
       var [ tokens, price ] = assessCost( '#sourceText', true, false );
@@ -253,14 +259,14 @@
 
   async function getContext() {                      /** Retrieve variables from local storage update UI */    
     let storedContext = {};
-    context = defaultContext;
+    context = JSON.parse( JSON.stringify( defaultContext ) );
     context.models = defaultModels;
     let contextString = await localStorage.getItem( "openAiContext" );
    
     if( contextString ) {
       storedContext = JSON.parse( contextString ); 
 
-      for( var attr in storedContext ) {  // copy from saved context to current context. hint saved may not have all current values
+      for( var attr in defaultContext ) {  // copy from saved context to current context. hint saved may not have all current values
         if( storedContext.hasOwnProperty( attr ) ) {
           context[ attr ] = storedContext[ attr ];
         }
@@ -289,10 +295,14 @@
             $( "#" + attr ).val( context.chunkSeparator ) /*.change()*/ ;
             break;
             
-         case "currentContext":
-            context.contextAry = context.repeatingContext.replace( /\n/g, "" ).split( "---" );
-            context.contextIdx = 0;
-            document.getElementById( attr ).value = context.contextAry[ 0 ];
+          case "currentContext":
+            // make context pipeline
+              context.contextAry = context.repeatingContext.replace( /\n/g, "" ).split( "---" );
+              context.contextIdx = 0;
+            
+            // get first one and show it if in pipeline
+              context.currentContext = context.contextAry[ 0 ];
+              document.getElementById( attr ).value = context.currentContext;
             break;
             
           case "isMarkChunk":  
@@ -312,9 +322,16 @@
 
             break;
 
+          case "contextAry":
+          case "contextIdx":
           case "buffers":
           case "chunkCount":
           case "isMarkChunks":
+          case "chunkTotal":
+          case "endpoint":
+          case "logItems":
+          case "bottom":
+          case "models":
             break;
 
           case "model":
@@ -380,7 +397,7 @@
             if( document.hasOwnProperty( attr ) ) {
               document.getElementById( attr ).value = context[ attr ];
             } else {
-              toast( `Unsupported property in local storage: ${attr}. Ignoring.`, 'Fault' );
+              toast( `GetContext: Unsupported property: '${attr}' found in localStorage. Ignoring.`, 'Fault' );
             }
         }
       }
@@ -417,13 +434,14 @@
   
   function init() {                                  /** Configure app at startup */
     markState( "Initializing" );
-    getContext(); // override all defaults with saved data
-    getModels();  // set default model
+    getContext();       // override all defaults with saved data
+    getModels();        // set default model
     markState( "Idling" );
     startStop( "play next", "pause redo cancel" );
+//    setCopies();
   }
   
-  function initBatch( id ) {                         /**  */
+  function initBatch( id ) {                         /** Begin processing files in batch pipeline */
     toggle( id );
     
     if( $( '#textFile' ).val().length > 0 ) {
@@ -460,29 +478,17 @@
     } );
   }
 
-  function chunksLeft() {                            /**  */
-    return  parseInt( Math.max( context.sourceText.split( " " ).length / context.chunkSize, 0 ) )
-  }
-  
   function initStepper() {                           /** Set up the first chunk */
+    candidate = "";
     context.contextIdx = 0;
-    currentContextObj.value = context.contextAry[ context.contextIdx ];
+    context.currentContext = context.contextAry[ context.contextIdx ];
+    currentContextObj.value = context.currentContext;
     isContinue = true;
     toast( "Init Stepper.", "Progress" );
     startStop( "cancel pause", "play next redo" );
     resetChunks();
   }
 
-  function resetChunks() {                           /**  */
-    clearChunks( "currentChunk simplifiedChunk combinedSimplifiedText" );
-    context.sourceText = sourceTextObj.value;
-    context.chunkTotal = parseInt( ( context.sourceText.split( " " ).length / context.chunkSize ) + 1 );
-    context.chunkCount = 0;
-    setProgress( "chunkProgress", 0 );
-    document.getElementById( "chunksComplete" ).innerText = 0;
-    context.currentChunk = "";
-  }
-  
   async function loadFile( files ) {                 /** Capture list of files, download them and list in textarea */
 //    var tgt = document.getElementById( 'textFile' );
 //    var fn = document.getElementById( 'fileName' );
@@ -505,10 +511,10 @@
   
   function markStateAll( txt ) {                     /** Set overall machine state to control action buttons */
     machineStateAll = txt;
-    toastWho( "#toasterAll", txt, "Progress" );
+    toastWhere( "#toasterAll", txt, "Progress" );
   }
 
-  function next() {                                  /** Resume processing next chunk */
+  function next() {                                  /** Resume processing next chunk or begin single stepping first chunk */
     markState( "Stepping" );
     setError( "" );
     startStop( "pause cancel", "play next redo" );
@@ -521,7 +527,7 @@
     }
   }
    
-  function nextAll() {                               /** Resume processing next file */
+  function nextAll() {                               /** Resume processing next file or begin single stepping from first file */
     markStateAll( "Stepping" );
     setError( "" );
     startStopAll( "pause cancel", "play next" );
@@ -582,15 +588,14 @@
     }    
   }
   
-  async function playAll() {                         /** Initiate processing of all files in list */
+  async function playAll() {                         /** Initiate or resume processing of all files in batch list */
     var fileCount = 0;
     document.getElementById( "filesComplete" ).innerText = fileCount;
     
     for( fileIdx in fileNames ) {
       isLooping = true;
       fileCount += 1;
-      toastWho( "#toasterAll", `Processing: ${fileNames[ fileIdx ]}.`, "Progress" );
-//        $( '#fileName' ).text( `Processing: ${fileNames[ fileIdx ]}` );
+      toastWhere( "#toasterAll", `Processing: ${fileNames[ fileIdx ]}.`, "Progress" );
       
       if( fileContent[ fileIdx ].length > 0 ) {
         $( '#sourceText' ).val( fileContent[ fileIdx ] );
@@ -627,22 +632,22 @@
         }
       }
       
-//      var filesComplete = parseInt( ( fileCount / fileNames.length ) );
       document.getElementById( "filesComplete" ).innerText = fileCount;
       setProgress( "fileProgress", parseInt( ( ( fileCount / fileNames.length ) ) * 100 ) );
-//      document.getElementById( "fileNumber" ).innerText = fileIdx + 1;
+      toastWhere( '#toasterAll', `Completed file: ${fileNames[fileCount - 1]}`, 'Progress' )
+//    document.getElementById( "fileNumber" ).innerText = fileIdx + 1;
 
     }
 
     switch( machineStateAll ) {
       case "Idling":
         $( '#fileName' ).text( `Processing Complete.` );
-        toastWho( "#toasterAll", `Completed batch processing after ${fileCount} files.`, "Complete" );
+        toastWhere( "#toasterAll", `Completed batch processing after ${fileCount} files.`, "Complete" );
         break
         
       case "Canceling":
         $( '#fileName' ).text( `Processing canceled.` );
-        toastWho( "#toasterAll", `Interrupted batch processing after ${fileCount} files.`, "Complete" );
+        toastWhere( "#toasterAll", `Interrupted batch processing after ${fileCount} files.`, "Complete" );
         break;            
     }
   }
@@ -651,12 +656,12 @@
     showSizes();
     toast( `Simplifying chunk: ${context.chunkCount} of  ${context.chunkTotal} chunks.`, "Progress" );   
     document.getElementById( "chunkNumber" ).innerText = context.chunkCount;
-    setProgress( "chunkProgress", parseInt( ( context.chunkCount / context.chunkTotal ) * 100 ) );
+    setProgress( "chunkProgress", parseInt( ( ( context.chunkCount - 1 ) / context.chunkTotal ) * 100 ) );
     
     await simplifyText( context.currentChunk, context.chunkCount );  
   }
   
-  function redo() {                                  /** Reprocess current chunk */                          
+  function redo() {                                  /** Reprocess current chunk. do not advance to next */                          
     markState( "Redoing" );
     clearChunks( "simplifiedChunk" );    
     startStop( "pause cancel", "play next redo" );
@@ -675,6 +680,16 @@
     }
   } 
 
+  function resetChunks() {                           /** Initialize buffers and counters for processing */
+    clearChunks( "currentChunk simplifiedChunk combinedSimplifiedText" );
+    context.sourceText = sourceTextObj.value;
+    context.chunkTotal = parseInt( ( context.sourceText.split( " " ).length / context.chunkSize ) + 1 );
+    context.chunkCount = 0;
+    setProgress( "chunkProgress", 0 );
+    document.getElementById( "chunksComplete" ).innerText = 0;
+    context.currentChunk = "";
+  }
+  
   function saveAsFile( idx ) {                       /** Use idx to find file name then download combined */
     var txt = $( '#target'  ).val();
     var pat = $( '#pattern' ).val();
@@ -708,6 +723,13 @@
           context.chunkSeparator = $('#chunkSeparator').find(":selected").val(); // select drop down
           break;
           
+        case "diff": 
+        case "log": 
+        case "batch": 
+        case "settings":  
+        case "help":
+          break;
+          
         case "model":
           context.model = $( '#model' ).val();                                   // select drop down
           break;
@@ -718,7 +740,6 @@
           context.contextIdx = 0
           currentContextObj.value = context.contextAry[ context.contextIdx ]
           showCurrentContext();
-
           break;
           
         case "sourceText":
@@ -731,6 +752,7 @@
           } else {
             if( document.hasOwnProperty( attr ) ) {
               document.getElementById( attr ).value = val; // normal context attributes
+              context[ attr ] = val;
             } else {
               toast( `No longer such a property as: ${attr}. Ignoring.`, 'Fault' );
             }
@@ -755,448 +777,32 @@
 
    }
   
-/* --- repeating prompts -----------------------------------------------------------------
-Please simplify the following text without comment. 
-
-Reword the following text so that an English as a second language 6th grader, can understand it. Retain all tables, titles and headers. 
-
-Convert the following text to Hindi.
-
-Reduce this text to 5 bullet points.
-
-Translate to Hindi
--------------------------------------------------------------------- */
-     
-/* --- source text -----------------------------------------------------------------   
-# Learning Principles - Facilitator Guide
-
-# Principles of Training
-
-[Learning Principles - Facilitator Guide A4.pdf](https://s3-us-west-2.amazonaws.com/secure.notion-static.com/9f49c9a9-0322-47fe-95c8-73ceba9cf5da/Learning_Principles_-_Facilitator_Guide_A4.pdf)
-
-**Adult Learning Principles**
-
-Objectives:
-
-- Apply principles of adult learning and how adults use their knowledge, skills, and attitudes in a training environment or while engaged in work
-- Applying techniques for enhancing learner engagement
-
-Section Overview
-
-“The purpose of this section is to provide new instructors with an overview of adult learning principles. It contains detailed descriptions of each adult learning principle.”
-
-### Opening Activity
-
-The key to making this a successful training event is to model the behaviors you expect students to emulate. For the adult learning principles open up with an activity that incorporates these learning principles.
-
-## Climate Setting
-
-### Exercise - Setting the Climate
-
-This activity serves as both an example of an opener activity and as a valuable comparison in its own right. Read the instructions in the learner guide and capture as many characteristics as your learners can come up with that describe a boring class. This is an opportunity for you to illustrate the use of humor in class by reading the instructions like this, “Think of the most boring class you have attended (outside of this class of course)…” Your instructor candidates will appreciate it and it will demonstrate an appropriate use of humor in climate setting.
-
-After you have read the instructions, solicit as many responses from the class as you can. Many of them will be similar. Using a whiteboard or flip chart, divide it into left and right columns. Ask the learners to list the characteristics of a boring class. Record their answers. Collect enough responses to identify all the opposites of the six learning principles.
-
-Once you have captured all the ideas and condensed or categorized similar responses, then ask learners to describe what the opposite characteristic of each is and record it in a second column next to the first. If you have not already done so, direct them to copy the list from the board or PowerPoint presentation into their learner guides. When they are done, congratulate them on coming up with a very thorough list and transition to the slide on the six principles of adult learning.
-
-Your finished chart will look something like this:
-
-| Characteristics of a Boring Class | Characteristics of a Good Class |
-| --- | --- |
-| Speaker uses a monotone voice. | Speaker varies voice tone, volume, and speaks enthusiastically. |
-| All lecture, no activities. | Variety of activities and presentation styles. Do not conduct an activity for more than 20 minutes without varying it in some way. |
-| Speaker reads from slides or instructor guide. | Speaker addresses audience rather than screen. |
-| Speaker does not make eye contact. | Speaker maintains eye contact and rapport with learners. |
-| Speaker ignores learner questions or does not answer them adequately. | Speaker answers questions directly and then checks for understanding. |
-| Speaker does not allow for audience participation, questions, or discussion. | Use a variety of styles in a presentation including question and answer. |
-| Boring content or subject matter. | Use a WIIFM? and Big Picture discussion to relate class to learners. |
-
-### Learner Engagement
-
-The single word that best describes the difference between a good class and a boring class is that the good class is the one in which the learners are most **engaged.** The more engaged learners are, the more motivated they will be in class. Let them know we will discuss learner engagement in more detail in a later session. For now, we will look at the basic principles of adult learning.
-
-Six Principles of Adult Learning
-
-These six principles provide the foundation for everything else in this course. Make sure you have them memorized and refer to them often during your presentation. Whenever you complete an activity, it would be good to reinforce these principles by asking instructor candidates which principle(s) the activity incorporated or demonstrated. Frequent repetition of these principles will help instructor candidates to remember them. Relate the principles to the factors that the learners listed. While there may not be a direct correlation, the characteristics they identified will relate to an established adult learning principle.
-
-|  | You may want to consider creating a poster along with the accompanying PowerPoint presentation to reinforce the six Principles of Adult Learning |
-| --- | --- |
-
-“Adults learn best when they:
-
-- “Are highly motivated
-- “Relate learning to life experiences
-- “Analyze experiences
-- “Participate in their learning
-- “Maintain their self-esteem, and
-- “Are valued for their individual differences.”
-
-When elaborating on each of these principles, refer back to the list that they generated and highlight how they have already expressed each of these principles in their own words.
-
-**Motivation**
-
-Ask the class to suggest some methods for motivating learners. Then ask them how you incorporated this principle in today’s class. Have them list these examples in their Learner Guide. Ask them to suggest ways they might incorporate these same practices in how they conduct training. Encourage them to take notes on these suggestions
-
-**Relation**
-
-Point out how you used the opener or icebreaker portion of the class to solicit information about their background and prior experience before starting with the class. Have them list these examples in their Learner Guide.
-
-Make sure they know that the value of the activity was not simply to introduce themselves to one another and set the tone for the class, but the opener or icebreaker also served as a tool for the instructor to find out who the learners are, what their background and experience is, and how they can incorporate the knowledge from class back to their translation workplace setting. Emphasize that one of the tasks of good instructors is to make the training relevant to the learners by showing the relationship between the content of the class and interests of the learner.
-
-**Analysis**
-
-Ask the instructor candidates what sort of analysis they have already performed on this class. Be prepared to handle a variety of responses. Point out that their learners are going to be doing much the same kind of analysis in the courses they will be teaching. Ask them to provide some ideas about the kind of analysis they can expect from their learners when they begin training.
-
-**Participation**
-
-Point out the number of opportunities you have already provided for instructor candidates to participate in the learning process. Ask them how they think this has contributed to the class so far. Ask them how they think the class would have gone if you had not involved them as much. Encourage them to list examples of classroom participation in their Learner Guide. Suggest that they will succeed as instructors precisely to the degree that they involve others in the learning process.
-
-**Self-Esteem**
-
-Emphasize that maintaining self-esteem does not mean you cannot correct learners when they make mistakes. It means that you correct them in way that is meaningful, relevant, and respectful.
-
-**Individuality**
-
-Have the class suggest ways in which individual differences could impact their training and how they would accommodate those differences. Ask, “What are some individual differences that learners want appreciated?” Follow up with a brief discussion on how to honor these individual differences.
-
-**Summary**
-
-Review the six principles of adult education.
-
-Adults learn best when they:
-
-- Are highly motivated
-- Relate learning to life experiences
-- Analyze experiences
-- Participate in their learning
-- Maintain their self-esteem, and
-- Are valued for their individual differences.
-
-Transition to the next section by stating:
-
-“The next section of this class will look at these principles in detail. We will discover some key strategies for incorporating these principles into actual training situations.”
-
-**Applied Learning Principles**
-
-**Section Overview**
-
-“The purpose of this section is to give you an opportunity to apply these adult learning principles. You will have an opportunity to:”
-
-|  | ●       “Identify two techniques for enhancing learner engagement”
-●       “Demonstrate how to build staff ownership and support for training initiatives”
-●       “Apply a four-step process to the practice of facilitation”
-●       “Provide effective feedback that enhances learner performance” |
-| --- | --- |
-
-**Enhancing Engagement**
-
-|  | Emphasize that adults are motivated by their ability to contribute to a worthwhile endeavor in a meaningful way. Two of the most common ways to accomplish this are to explain the Big Picture and use WIIFM statements. 
- |
-| --- | --- |
-
-You can do a mini role play by introducing a sample course in two different ways such as:
-
-- “Today we are going to learn how to use tCore to do translation checks. We will start with the book of Titus and after you get some experience with that, we will move on to the book of Ruth in the Old Testament.”
-
-Compared to:
-
-- “Today we are going to learn how to use tCore to do translation checks as part of the Checking step in the overall translation process. The reason translation checks are important is because we want to offer translations that are clear, accurate, natural, and likely to be church-approved. This means that all the effort you put into generating a good translation will pay off with a high-quality document that benefits from being checked by multiple people.”
-
-You may use a different example that is relevant for the learners in the class you are teaching. The main point is that you demonstrate the difference between introducing training without using the motivational techniques of explaining the **Big Picture** and giving a **WIIFM** message compared to introducing training missing one or both of these messages. Ask the instructor candidates to give examples of how they can include the **Big Picture** and **WIIFM** information in the classes they will be introducing and record them in their books.
-
-***The Big Picture***
-
-Some possible responses relating to the Big Picture are:
-
-- We train to enhance the quality of the Bibles we produce.
-- We reduce costs and time by improving the ability to check translations quickly and easily
-- We want to provide a Bible that is beloved by the people who receive it
-
-***WIIFM***
-
-Some possible response relating to WIIFM? include:
-
-- The translation process is complex and can be hard to understand, but this training will help them to organize the process for ease of understanding
-- They want to produce good translations and this training will help them understand what makes a translation a “good” one.
-- They want to remain a valuable contributor to translation efforts and this training will help make them a valued partner in the work.
-- They want to avoid mistakes that could lead to errors and misunderstandings in the church.
-
-**Enhancing Ownership**
-
-Take this opportunity to encourage the attendees in this class to take ownership of the training outcomes. While they should be encouraging their learners to always do quality work, you should also encourage them to apply the same standards to the training they conduct. They would never want to translate an unsuitable product, so encourage them to never release an unsuitably trained learner to perform independently.
-
-**Facilitation**
-
-Facilitation is the act or process of making something easier. Ask the participants to identify some ways you have made training easier today. Capture their responses on a whiteboard or newsprint. Ask them to identify how these actions fit within the four steps of good facilitation.
-
-|  | ●       Observing
-●       Questioning
-●       Listening
-●       Feedback |
-| --- | --- |
-
-Discuss each of these items in detail using the content from the learner guide.
-
-- *Observing* - Relates to the instructor candidate’s ability to use observation skills to understand the kind of experiences that the learner is having.
-- *Questioning* - Make sure you emphasize the difference in asking open questions and closed questions. Identify for your students when each type is most appropriate.
-- *Listening* - Listening involves more than just the words that people are saying. Good instructors “listen” to the facial expression and body language as well. One way to show that you are listening is to use the following active listening skills:
-- Paraphrasing - putting their question in your own words to make sure they are clearly understood.
-- Restating - This involves repeating question back to learners. Use this technique sparingly as it can quickly become annoying.
-- *Feedback* - This is the response that we give back to learner performance.
-
-Before going on to the section on feedback, spend some time demonstrating how to use questioning strategies effectively. Tell your participants that it is possible to achieve a desired outcome simply by asking the right questions and providing feedback based on the learner’s response.
-
-An example of how to conduct a Question-Response interchange is included here called the “Pick A Card Demonstration.” You may modify this demonstration or substitute a similar one that illustrates both good questioning practices and examples of how to provide good feedback.
-
-This demonstration serves as a bridge between using effective questioning strategies and the importance of providing appropriate feedback. If you substitute another activity of your own, make sure it emphasizes the two points of using effective questioning strategies and providing appropriate feedback.
-
-***State***:
-
-“This demonstration is intended to illustrate the following key points:
-
-- “The power of questions to engage the learner in discovering answers for themselves
-- “The ability of good questions to provide information that directs learners in the direction they should go
-- “The value of wrong answers, when handled correctly, to direct learners to helpful information
-- “The importance of providing positive feedback that affirms the effort while correcting errors in a way that maintains learner self-esteem
-
-**Pick a Book Demonstration**
-
-*Instructions:*
-
-Conduct this demonstration by selecting a volunteer from the class to act as the “learner.” Tell them that after answering a series of questions, they will be able to correctly identify a book of the Bible chosen at random by another class member. Have a volunteer from the class either choose a book of the Bible at random, write it on a card, and give it to you, or if you do not want to bring index cards to class, have them choose one mentally, write down their choice on a piece of paper and give it to you.
-
-Next, you will ask a series of questions until the “learner” has correctly identified the book that the other person picked. In order to insure they successfully identify the right book that the other volunteer picked you will provide effective feedback to direct their efforts and follow up with another question.
-
-Two main considerations enable this exercise to run successfully — the type of *questions* you will use and the *feedback* that you provide to your “learner” as they make their guesses. In order to prepare for this exercise study the following questions carefully and notice the order in which they are asked. Note that they move from the more general to the more specific as we narrow down the possible correct answers. You will also need to be prepared to provide effective feedback that helps them arrive at the correct answer will maintaining their self esteem. Review the feedback examples and try to use a unique response every time so you do not repeat any of the examples. A sample script is provided as an example of how this demonstration might play out.
-
-The key elements are the use of carefully selected questions that guide the learners to a successful outcome and the use of effective feedback that:
-
-- Affirms the learner’s effort (positive reinforcement)
-- Avoids the use of “but” as in “That was a good effort, but ...”
-- Provides helpful information that guides the learner in the right direction, preferably using another question.
-
-***Example Questions***
-
-- “In the Bible, there are two testaments, the Old and the New. Which testament do you think this person picked?”
-- “Of that testament there are four sections. Which section would you think this person would pick?” (Old Testament sections: Pentateuch, History, Poetry, Prophets; New Testament sections: Gospels, History, Epistles, Prophecy)
-- “Of that section there are sub-sections. Which sub-section do you think this person is most likely to pick?”
-    - Pentateuch – Law or History
-    - History – Pre-exilic or Post-exilic
-    - Poetry – Davidic or Non-Davidic
-    - Prophets – Major or Minor
-    - Gospels – Synoptic or non-Synoptic
-    - History – Acts is the only one
-    - Epistles – Pauline or General
-    - Prophecy – Revelation is the only one
-- “Of the [sub-section] there are different divisions [see below]. How do you think this person chose?”
-    - Pentateuch –
-        - Law – Priestly Law (Leviticus) or Restated Law (Deuteronomy
-        - History – Ancient (Genesis), Contemporary (Exodus) or Chronicle (Numbers)
-    - History –
-        - Pre-exilic – Pre-Kingdom (Joshua, Judges, Ruth) or Post-Kingdom (Samuel, Kings, Chronicles)
-        - Post-exilic – Scribal (Ezra), Administrative (Nehemiah), or Narrative (Ester)
-    - Poetry –
-        - Davidic (Psalms)
-        - Non-Davidic – Solomonic (Proverbs, Ecclesiastes, Song of Solomon), non-Solomonic (Job)
-    - Prophets –
-        - Major – Exilic (Isaiah, Jeremiah, Lamentation) or post-Exilic (Ezekiel, Daniel)
-        - Minor – Judean, Israelite, or Neither (Obadiah)
-            - Judean – Pre-exilic (
-            - Israelite -
-        - Gospels – Synoptic or non-Synoptic (John)
-        - History – Acts is the only one
-        - Epistles –
-            - Pauline
-                - Pastoral (Timothy, Titus)
-                - Ecclesiastical (Romans, Corinthians, Galatians, Ephesians, Philippians, Thessalonians)
-                - Personal (Philemon)
-            - General (Peter, John, or Jude)
-        - Prophecy – Revelation is the only one
-    - “Of the [correct choice] there are [smaller divisions]. Which do you think this person picked?”
-
-Continue either/or choices until the next question will lead to the correct answer. Conclude by saying, “You are now ready to choose which book of the Bible our volunteer chose. What card did they pick?” Acknowledge their successful completion of the exercise.
-
-***Example Feedback***
-
-The key to successfully completing this demonstration and the main point of the exercise is that the instructor must have a positive response ready for every wrong response that the learner gives, which will direct them to the correct answer. Examples include:
-
-- “That is exactly what I would have thought; however, the correct answer is?”
-- “I would have felt the same way; and a better answer would be?”
-- “Other people have thought the same thing; however, a more accurate answer would be?”
-- “On most days we could expect that answer to be correct; so what do you think the correct answer is today?”
-- “For most organizations we would expect that to be a fine choice; except here the preferred choice is actually what?”
-- “In this country we would expect most people to choose that; although what they really chose was what?”
-- “They are from a country where we would expect that to be a common answer even though they did something different which was what?”
-
-You may use any others that you can come up with as long as they are all positive, nonjudgmental, and direct the learner to the correct choice with a minimum of prompting. Take special care to make sure that you do not repeat any responses.
-
-Notice how this demonstration might look by reading through the example script below.
-
-***Example Instructor Script***
-
-I = Instructor
-
-L = Learner
-
-I:          This next exercise will demonstrate how it is possible, using only questions, to guide a learner to a successful learning outcome. I need a volunteer to choose book of the Bible at random, write their choice on a piece of paper so no one can see, and hand it to me. [Choose volunteer, have them choose a card, write it on a piece of paper, and hand it to you.] Thank you. Now I need a volunteer to be the learner, someone who is familiar with the books of the Bible. I am going to ask a series of questions and when I am done, you will be able to tell me what book our volunteer picked. [Choose a volunteer learner.]
-
-Thank you for volunteering. Based on what you know of our volunteer would you say that they are likely to pick a book from the Old Testament or the New Testament?
-
-L:         The Old Testament.
-
-I:          That is exactly what I would have said. However, the book that our volunteer actually picked out is…?
-
-L:         The New Testament.
-
-I:          Correct. And of the New Testament books, there are four sub-divisions: Gospels, History, Epistles, and Prophecy. Which do you think they would have picked?
-
-L:         Prophecy.
-
-I:          And that would be a good answer on most days. Today, however, they picked…?
-
-L:         Gospels.
-
-I:          Almost! Take a good look at them and ask yourself, what would they have chosen for real?
-
-L:         Epistles
-
-I:          Excellent. And of the epistles, would they have chosen a Pauline Epistle or a General Epistle?
-
-L:         A General Epistle.
-
-I:          Most volunteers in a similar situation would have picked a General Epistle. Our volunteer is not like most others, so they picked…?
-
-L:         A Pauline Epistle.
-
-I:          That is exactly correct. And of the Pauline Epistles, there are pastoral epistles, church epistles, and one personal epistle. Would our volunteer have picked a personal, pastoral, or church epistle?
-
-L:         A personal epistle.
-
-I:          I can see how you came to that conclusion. Our volunteer, however, actually picked…?
-
-L:         A church epistle.
-
-I:          Perfect. Yes, they picked a church epistle. Now would you expect them to pick a church that received a single epistle or one that received multiple epistles?
-
-L:         A single epistle.
-
-I:          And that would also have been a perfect choice if we had picked a different volunteer. Our volunteer actually picked…?
-
-L:         A multiple epistle.
-
-I:          Exactly. Now which high multiple epistle do you think they would have picked – Corinthians or Thessalonians?
-
-L:         Corinthians.
-
-I:          That was a very good answer and it is very close to the correct one. Would you like to choose again?
-
-L:         Thessalonians.
-
-I:          Well done. And would they have picked 1 Thessalonians or 2 Thessalonians
-
-L:         2 Thessalonians
-
-I:          You have successfully eliminated all the books that our volunteer could not have picked. So now you can confidently state which book they did pick. What book of the Bible did our volunteer choose?
-
-L:         1 Thessalonians
-
-I:          That is correct! They did choose the book of 1 Thessalonians. Can I have a round of applause for our volunteer’s successful completion of this exercise?
-
-***Debrief/Discussion***
-
-You may then transition from this exercise directly into the next topic of providing feedback by asking the questions below.
-
-- “Were the questions open or closed questions?” *Use this question to reinforce the value of both types of questions depending on the learning situation.*
-- “Were all the learner’s answers correct?” *Use this question to highlight the value of wrong answers as teachable moments and learning opportunities. You may mention that we sometimes learn more from our mistakes than we do when we get things correct.*
-- “How did I maintain the learner’s self-esteem?” *You pointed out what was wrong and what they could do to succeed.*
-- “What are the two main characteristics of effective feedback?” *This leads into the next segment on feedback as you discuss what it means to be positive and how feedback is helpful information that is action focused.*
-
-Emphasize the connection between facilitation (the art of making things easier) and feedback (finding out where learners are having trouble and guiding them to improved performance). Explain, “Facilitation is *what* we do and feedback is *how* we do it. Effective feedback is essential to effective facilitation.”
-
-**Feedback**
-
-There are three basic concepts instructor candidates should get from this section.
-
-These are:
-
-|  | ●       A definition of feedback (helpful information that is action focused)
-●       Avoid the use of “but” when providing feedback.
-●       A way to evaluate feedback (SMART) |
-| --- | --- |
-
-Clarify the meaning of positive feedback. Tell them, “When we use the term ‘positive feedback’ we do not mean that it is always upbeat and intended to make the learner feel good about themselves. We use the term to indicate that it positively directs the learner to what they are supposed to be doing. This is contrasted with ‘negative feedback’ which focuses on what they are not supposed to do. To summarize, ‘positive feedback’ is **helpful information** that is **action focused**.”
-
-Solicit examples of ineffective feedback and effective feedback from your instructor candidates. You may capture these on a whiteboard or newsprint and have them list them in their Learner Guides.
-
-Explain the **SMART** acronym as a way to gauge whether feedback is truly positive. Generally, feedback that meets SMART criteria will be effective feedback.
-
-The section on **avoiding the “B” word** is an easy concept to grasp but difficult to execute. One key to making this successful is to model this behavior throughout the class. Your learners will imitate you, so it is important that you demonstrate alternatives to using the “B” word when providing feedback. It is a hard habit to break but one that must be broken in order to consistently maintain learner self-esteem.
-
-**Summary/Exercise**
-
-You have two options for summarizing this section based on the amount of time available, the composition of the class and your delivery style. You can review the summary information in the learner guide in **Assignment 1: Delivering Feedback** or you can conduct a feedback role playing exercise and debrief to highlight the main points of this section, or both. An example feedback role playing exercise is provided called the “Candy Sorting Exercise.” You may use this exercise or you may choose an exercise that is relevant to your class. You can adapt this by sorting buttons, office supplies, or any other small items you have available as training aids. The items being sorted are not as important as providing an opportunity to practice the skills they just observed in class.
-
-This exercise is intended to give the instructor candidates practice in providing effective feedback. If you use a substitute activity, make sure you include these elements:
-
-- A simple procedure that is easy to explain and complete
-- An opportunity for the person in the learner role to fail on the first attempt
-- A means for the person in the instructor role to provide effective feedback
-
-**The Candy Sorting Exercise**
-
-**Description:** The purpose of this exercise is to provide participants with an opportunity to practice coaching and feedback skills. It is designed as a sample training event to permit learners to provide feedback to their learners/peers.
-
-Steps
-
-1. Divide the class into pairs or groups of three depending on the size of the class and time available.
-2. Explain the responsibilities of each role within the groups using the following scenario and instructions:
-
-***Scenario “***Based on complaints we have received from previous classes, we have been told that we must keep certain types of candies in a temperature-controlled environment at all times in order to maintain their quality. This requirement applies to chocolates and other candies that would be adversely affected by temperatures in excess of 30o C. Other candies such as hard candy can be safely maintained in a non–temperature-controlled environment without adversely affecting product quality. Because we have limited space in temperature-controlled environments, we have decided to segregate temperature-sensitive candies from non–temperature-sensitive candies and store them separately. Staff new to the task of sorting candy must be trained in proper identification and segregation techniques to ensure that our products meet the highest quality standards possible.”
-
-If you are substituting another sorting activity, make sure you have a similarly plausible rationale. For example:
-
-- If sorting paper clips, explain that large and small paper clips need to be separated for cost controlling purposes. Or paper clips and binder clips need to be segregated to improve efficiency.
-- If sorting buttons, you can sort them by size, color, or number and type of hole. However, make sure there is a logical reason for separating them.
-- If sorting sticky notes or other office paper supplies, you might separate them based on cost and the need to reduce expenses.
-
-***Roles “*Instructors,** it is your job to train your staff person to the new Candy Sorting Procedure so that they can accurately segregate temperature-sensitive from non–temperature-sensitive candies. This will allow us to store candy appropriately and maintain product quality and compliance.
-
-**“Learners,** it is your job to practice the Candy Sorting Procedure until you get it right. You will not be successful on your first attempt, but with practice, feedback, and guidance from your instructor you will ultimately succeed.
-
-**“Observers** (If used)**,** it is your job to evaluate the coaching provided to the learner. Watch the session carefully and share your findings with the rest of the group.
-
-“After each round of ‘training,’ switch roles until everyone in the group has had an opportunity to be instructor, learner, and observer.”
-
-**Discussion questions**
-
-When everyone is finished, solicit comments from the instructor candidate that highlight the key points of this section listed above. Have them record their responses in Assignment 1: Delivering Feedback. You may use the sample questions below for discussion.
-
-- “In what way did you provide helpful information that was action focused?”
-- “Were you able to avoid using the “b” word? How easy or difficult was this?”
-- “What were some alternatives you used?”
-- “How did you feel providing this type of feedback? How likely are you to make this a natural part of your training style? What would help you in this regard?”
-- “How well did your feedback maintain learner self-esteem? Learners, how did you feel receiving the kind of feedback you did? How well do you think this will work in a real training setting?”
-- “Did anyone begin their training session by using a Big Picture or WIIFM? explanation? How did that go?”
-
-**Unit Checkpoint**
-
-Depending on your schedule, this is a good point to take a break. The first part of the course dealt with *principles* and the remaining section will deal with *practices*. Summarize how far they have come and what remains ahead of them.
-
-“Here is what we have covered so far:
-
-- “The Six Principles of Adult Learning. What are they?”
-- “We discussed two ways to motivate learners. What are they?
-- “Who owns the outcome for training?”
-- “What is facilitation? How do we make things easier for our learners?”
-- “What are the two characteristics of effective feedback? What acronym do we use to make sure our feedback is helpful information that is action focused?”
-
-“Here is what we have left to cover in the next section:
-
-- “We will learn a six-step method for teaching a skill called the Behavior Modeling Process and use it to teach a skill.”
-- “We will learn what to do to ensure a successful outcome of a training event through coaching and negotiating.”
-- “We will learn how to evaluate the effectiveness of the training we deliver.
-  */
-
+  async function scrapeModel() {
+    await fetch( 'https://platform.openai.com/docs/models', { method: "GET",  mode: "no-cors" } )
+    .then( response => response.json() ) 
+    .then( data => {       // got a response.. but wait there may be more
+      var res = data.error;
+
+      if( res ) {
+        toast( `Error: ${JSON.stringify( res.message )}`, "Fault" );
+        setError( res.message.slice( 0, 60 ) + "... See Log." );
+        cancel();
+      } else {
+        var dta = data.choices[0].message.content;
+      }
+    });
+  }
+  
+  function setCopies() {
+    setCopy( "orgBuffer" );
+    setCopy( "changedBuffer" );
+  }
+  
+  function setCopy( id ) {
+    var val = $( `#${id}` ).find( 'option:selected' ).text();
+    $( `#${id}Selection` ).html( val );
+  }
+  
   function setError( txt ) {                         /** Put some exception text near app state for a few seconds */
     document.getElementById( 'chatError' ).innerText = txt;
     
@@ -1222,7 +828,7 @@ Depending on your schedule, this is a good point to take a break. The first part
     cur.value = pct;
   }
   
-  function showCurrentContext() {                    /**  */
+  function showCurrentContext() {                    /** Only show current context if repeatingcontext specifies a pipeline */
     if( context.contextAry.length > 1 ) {
       $( "#currentContextScope" ).show();
     } else {
@@ -1242,7 +848,7 @@ Depending on your schedule, this is a good point to take a break. The first part
       var bufName = "#" + bufferNames[ bufId ];
       var bufTxt =   "";
       
-      if( context.isShowSizes.indexOf( "on" ) >= 0 ) {
+      if( context.isShowSizes && context.isShowSizes.indexOf( "on" ) >= 0 ) {
         var bufLen =  $( bufName ).val().length;
         
         if( bufLen > 0 ) {
@@ -1262,7 +868,7 @@ Depending on your schedule, this is a good point to take a break. The first part
         case "Initing":
           break;
         
-        case "Saved":
+        case "Saved":          // happens if you toggle buffers while processing
           markState( previousState );
           break;
           
@@ -1282,7 +888,7 @@ Depending on your schedule, this is a good point to take a break. The first part
           
         case "Pausing":
           startStop( "play next redo cancel", "pause" );  
-          // we get here every couple seconds but otherwise do nothing           
+                              // we get here every couple seconds but otherwise do nothing           
           break;
         
         case "Playing":
@@ -1300,14 +906,15 @@ Depending on your schedule, this is a good point to take a break. The first part
                 context.contextIdx < ( context.contextAry.length - 1 ) ) {
               context.contextIdx += 1;
               context.currentContext = context.contextAry[ context.contextIdx ];
-              currentContextObj.value = context.currentContext
+              currentContextObj.value = context.currentContext;
               
               context.combinedSimplifiedText = combinedSimplifiedTextObj.value; 
               context.sourceText = context.combinedSimplifiedText;
               sourceTextObj.value = context.sourceText; 
               
-              context.combinedSimplifiedText = "";
-              combinedSimplifiedTextObj.value = "";
+              resetChunks();
+//              context.combinedSimplifiedText = "";
+//              combinedSimplifiedTextObj.value = "";
             } else {
               markState( "Completing" );
               isContinue = false;
@@ -1339,6 +946,7 @@ Depending on your schedule, this is a good point to take a break. The first part
         isContinue = false;
         startStop( "", "play pause next redo cancel" ); 
         toast( "End of Text.", "Complete" );
+        setProgress( "chunkProgress", 100 );
     }
     
     if( context.contextAry.length > 1 &&
@@ -1381,8 +989,7 @@ Depending on your schedule, this is a good point to take a break. The first part
        } )
     } )
     .then( response => response.json() ) 
-    .then( data => { // got a response.. but wait there may be more
-
+    .then( data => {       // got a response.. but wait there may be more
       var res = data.error;
 
       if( res ) {
@@ -1390,16 +997,16 @@ Depending on your schedule, this is a good point to take a break. The first part
         setError( res.message.slice( 0, 60 ) + "... See Log." );
         cancel();
       } else {
-
         var sep = "\n";
       
         if( context.isMarkChunk ) {
           sep = "\n\n---" + chunkCount + "---\n\n";
         }
       
-        simplifiedChunkObj.value = data.choices[0].message.content;
+        var dta = data.choices[0].message.content;
+        simplifiedChunkObj.value = dta;
         document.getElementById( "simplifiedChunkNumber" ).innerText = chunkCount;
-        candidate = sep + data.choices[0].message.content;
+        candidate = sep + dta;
       }
     } )
     .catch( error => {
