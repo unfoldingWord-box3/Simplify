@@ -55,6 +55,6 @@
       context.dragables[ itm ].top     = y2;
       context.dragables[ itm ].width   = subject.offsetWidth;
       context.dragables[ itm ].height  = subject.offsetHeight;
-//      saveContext( context.dragables[ itm ] );
+      saveContext( itm );
     }
   }
