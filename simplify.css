@@ -65,7 +65,7 @@
     float:         left;
   }
   
-/*  .sash {
+/* .sash {
     height:   2in;
     width:    10px;
     border:   none;
@@ -75,6 +75,7 @@
     position: relative;
   }
 */  
+
   .edt {
     width: 5em;
   }
@@ -100,7 +101,7 @@
     border:            none;
     margin:            0;
     overflow:          auto;
-    padding:      10px;
+    p/adding:      10px;
     height:            calc( 100% - 0.5in );
   }
     
@@ -115,7 +116,11 @@
     scroll:           none;
     padding-bottom:   30px;
   }
-    
+   
+  .helpBody {
+    padding:  10px;
+  }
+  
   #eventLogBody {
     scroll-snap-type: y proximity;
   }
@@ -186,7 +191,6 @@
     text-align: right;
   }
   
-  #helpheader { p/adding-right: 5px;}
   .resizable {
     resize: vertical;
   }
@@ -202,7 +206,7 @@
     width: 100%;
     padding: 5px;
     margin: 2px;
-    overflow: hidden
+    overflow-y: auto;
   }
 
   .diffs {
