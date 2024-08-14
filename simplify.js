@@ -9,6 +9,7 @@
     currentChunk:           "",  currentChunkHeight:           "4em",
     simplifiedChunk:        "",  simplifiedChunkHeight:        "4em",
     combinedSimplifiedText: "",  combinedSimplifiedTextHeight: "8em",
+    temperature:            0.2,
     chunkSize:              500,
     chunkSeparator:         " ",
     chunkTotal:             1,    // ( length / chunkSize )
@@ -17,37 +18,19 @@
     endpoint:               "",
     isMarkChunk:            true,
     isShowSizes:            false,
-    bufferTitle0:           "",
-    bufferTitle1:           "",
-    bufferTitle2:           "",
-    bufferTitle3:           "",
-    bufferTitle4:           "",
-    bufferTitle5:           "",
-    bufferTitle6:           "",
-    bufferTitle7:           "",
-    bufferTitle8:           "",
-    bufferTitle9:           "",
+    isConfiged:             true,
+    isBuffered:             true,
+    buffer0:  "",  buffer0Title: "", buffer0Height: "6em", buffer0Toggle: true,  
+    buffer1:  "",  buffer1Title: "", buffer1Height: "6em", buffer1Toggle: true,
+    buffer2:  "",  buffer2Title: "", buffer2Height: "6em", buffer2Toggle: true,
+    buffer3:  "",  buffer3Title: "", buffer3Height: "6em", buffer3Toggle: true,
+    buffer4:  "",  buffer4Title: "", buffer4Height: "6em", buffer4Toggle: true,
+    buffer5:  "",  buffer5Title: "", buffer5Height: "6em", buffer5Toggle: true,
+    buffer6:  "",  buffer6Title: "", buffer6Height: "6em", buffer6Toggle: true,
+    buffer7:  "",  buffer7Title: "", buffer7Height: "6em", buffer7Toggle: true,
+    buffer8:  "",  buffer8Title: "", buffer8Height: "6em", buffer8Toggle: true,
+    buffer9:  "",  buffer9Title: "", buffer9Height: "6em", buffer9Toggle: true,
     buffers:                0,
-    buffer0:                "",  buffer0Height: "6em",
-    buffer1:                "",  buffer1Height: "6em",
-    buffer2:                "",  buffer2Height: "6em",
-    buffer3:                "",  buffer3Height: "6em",
-    buffer4:                "",  buffer4Height: "6em",
-    buffer5:                "",  buffer5Height: "6em",
-    buffer6:                "",  buffer6Height: "6em",
-    buffer7:                "",  buffer7Height: "6em",
-    buffer8:                "",  buffer8Height: "6em",
-    buffer9:                "",  buffer9Height: "6em",
-    bufferToggle0:          true,
-    bufferToggle1:          true,
-    bufferToggle2:          true,
-    bufferToggle3:          true,
-    bufferToggle4:          true,
-    bufferToggle5:          true,
-    bufferToggle6:          true,
-    bufferToggle7:          true,
-    bufferToggle8:          true,
-    bufferToggle9:          true,
     logItems:               0,
     bottom:                 false,
     dragables: {
@@ -175,7 +158,7 @@
 
   function bufferToggle( idx, val ) {                /** Toggle textarea visibility */
     $( "#buffer" + idx ).toggle();
-    saveContext( "bufferToggle" + idx, val.checked );
+    saveContext( "buffer"+idx+"Toggle", val.checked );
   }
   
   function cancel() {                                /** Stop processing at end of current chunk and prepare to restart */                           
@@ -277,6 +260,8 @@
           context.models[ mod ] = storedContext.models[ mod ];
         }
       }
+    } else {
+      localStorage.setItem(  "openAiContext", JSON.stringify( context ) );   // set to default
     }
 
     for( bIdx = 0; bIdx < 10; bIdx += 1 ) {
@@ -305,14 +290,18 @@
               document.getElementById( attr ).value = context.currentContext;
             break;
             
+          case "isShowSizes": 
+          case "isConfiged":  
+          case "isBuffered":            
           case "isMarkChunk":  
-            document.getElementById( "isMarkChunk" ).checked   = context.isMarkChunk;
+            $( "#"+attr ).checked = context[ attr ];
             break;
           
-          case "isShowSizes":  
-            document.getElementById( "isShowSizes" ).checked   = context.isShowSizes;
+/*        case "isShowSizes":  
+            document.getElementById( "isShowSizes" ).checked = context.isShowSizes;
             break;
-          
+*/          
+
           case "dragables":
             for( itm in context.dragables ) {
               for( atr in context.dragables[ itm ] ) {
@@ -338,23 +327,23 @@
             $( "#model" ).val( context.model );
             break;
         
-          case "bufferTitle0":
-          case "bufferTitle1":
-          case "bufferTitle2":
-          case "bufferTitle3":
-          case "bufferTitle4":
-          case "bufferTitle5":
-          case "bufferTitle6":
-          case "bufferTitle7":
-          case "bufferTitle8":
-          case "bufferTitle9":
-            if( context.hasOwnProperty( attr ) ) {
+          case "buffer0Title":
+          case "buffer1Title":
+          case "buffer2Title":
+          case "buffer3Title":
+          case "buffer4Title":
+          case "buffer5Title":
+          case "buffer6Title":
+          case "buffer7Title":
+          case "buffer8Title":
+          case "buffer9Title":
+/*          if( contexOt.haswnProperty( attr ) ) {
               var ttl = document.getElementById( attr );
               ttl.value = context[ attr ];
               ttl.style.height = context[ attr + "Height" ];  
             }
             break;
-            
+*/            
           case "previousPrompts": // These have height attributes that may change
           case "repeatingContext":
           case "sourceText":
@@ -376,19 +365,19 @@
             obj.style.height = context[ attr + "Height" ];               
             break;
           
-          case "bufferToggle0":
-          case "bufferToggle1":
-          case "bufferToggle2":
-          case "bufferToggle3":
-          case "bufferToggle4":
-          case "bufferToggle5":
-          case "bufferToggle6":
-          case "bufferToggle7":
-          case "bufferToggle8":
-          case "bufferToggle9":
-            var idx = attr.slice( -1 );
+          case "buffer0Toggle":
+          case "buffer1Toggle":
+          case "buffer2Toggle":
+          case "buffer3Toggle":
+          case "buffer4Toggle":
+          case "buffer5Toggle":
+          case "buffer6Toggle":
+          case "buffer7Toggle":
+          case "buffer8Toggle":
+          case "buffer9Toggle":
+            //var idx = attr.sice( -1 );
             $( "#" + attr ).prop( "checked", context[ attr ] ).change();  
-            $( "#buffer" + idx ).css( "display", context[ attr ] ? "inline" : "none" );   
+            $( "#"+attr.slice( 0, 7 ) ).css( "display", context[ attr ] ? "inline" : "none" );   
             break;
             
           default:
@@ -672,7 +661,7 @@
     if( window.confirm( "Warning: This will remove all locally stored data and and reset to default values except API Key." ) ) {
       localStorage.removeItem( 'openAiContext' );
       sleep( 1000 );
-      context = [];
+      context = {};
       init();
       toast( "Reset", "Complete" );
     } else {
@@ -730,8 +719,19 @@
         case "help":
           break;
           
+/*        case "isShowSizes": 
+        case "isConfiged":  
+        case "isBuffered":            
+        case "isMarkChunk":  
+          context[ attr ] = document.getElementById( attr ).checked;
+          break;
+*/        
+        case "temperature":
+//          context.temperature =  $( '#temperature' ).val();  
+          break;
+          
         case "model":
-          context.model = $( '#model' ).val();                                   // select drop down
+//          context.model = $( '#model' ).val();                                   // select drop down
           break;
 
         case "repeatingContext":
@@ -747,16 +747,16 @@
           break;
 
         default:
-          if( attr.slice( 0, -1 ).indexOf( "bufferToggle" ) >= 0 ) {
-            context[ attr ] = val;
-          } else {
+//        if( attr.slice( 0, -1 ).indexOf( "bufferToggle" ) >= 0 ) {
+//          context[ attr ] = val;
+//        } else {
             if( document.hasOwnProperty( attr ) ) {
               document.getElementById( attr ).value = val; // normal context attributes
               context[ attr ] = val;
             } else {
               toast( `No longer such a property as: ${attr}. Ignoring.`, 'Fault' );
             }
-          }
+//        }
       }
       
       estimateCost();
