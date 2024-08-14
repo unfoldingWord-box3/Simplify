@@ -36,7 +36,7 @@
     <div id="config" > 
       <span id="config-title"> Getting Started: Configuration </span> 
       <span data-text='Toggle config info' class='tooltip'> 
-        <input name='configed' type='checkbox' onclick='toggle("#conf")' checked > </span> <br>
+        <input id='isConfiged' type='checkbox' onchange="saveContext('isConfiged', this.value )" onclick='toggle("#conf")' checked > </span> <br>
       <div id='conf'>
         1.  
           Set up an OpenAI account (<a href='https://openai.com' target='BLANK' >OpenAi</a>) then enter key here. 
@@ -54,7 +54,7 @@
           </table> 
 
         4. <span>Set Temperature to between 0 and 2.</span> 
-          <input id="temperature" type="number" value="0.2" min="0" max="1" > <br>
+          <input id="temperature" type="number" value="0.2" min="0" max="1"  onchange="saveContext( 'temperature', this.value )"> <br>
 
         5. Set chunk size  to between 250 and 10,000 <input type="range" id="chunkSize" min="250" max="10000" step="250" value="500"
                onchange="saveContext( 'chunkSize', this.value )" > <span id="chunkSizeValue" > 500 </span> <br> 
@@ -136,85 +136,85 @@
       
       <div class="blk bufferGroup clear">
         <h3> Buffers 
-          <input name='buffered' type='checkbox' onclick='toggle("#buffed")' checked > 
+          <input name='isBuffered' type='checkbox' onclick='toggle("#buffed")' checked > 
         </h3>  
         <ol id='buffed'>
           <li>
-              <div class="buffer" id="b0">
-                <input    type="text" class="bufferTitle"            id="bufferTitle0" value="" onchange="saveContext( 'bufferTitle0', this.value )">  
-                <input    type="checkbox" class="bufferToggle"       id="bufferToggle0"         onclick="bufferToggle( '0', this )" > <span id="buffer0Size" ></span>
-                <textarea             class="textBox resizable"      id="buffer0"               onchange="saveContext( 'buffer0',      this.value )"></textarea><br />
-              </div>
+            <div class="buffer" id="b0">
+               <input    type="text"     class="bufferTitle"       id="buffer0Title" value="" onchange="saveContext( 'buffer0Title', this.value )">  
+               <input    type="checkbox" class="bufferToggle"      id="buffer0Toggle"         onclick="bufferToggle( '0', this )" > <span id="buffer0Size" ></span>
+               <textarea                 class="textBox resizable" id="buffer0"               onchange="saveContext( 'buffer0',      this.value )"></textarea><br />
+            </div>
     
           </li>
           <li>
             <div class="buffer" id="b1">
-              <input    type="text"     class="bufferTitle"        id="bufferTitle1" value="" onchange="saveContext( 'bufferTitle1', this.value  )"> 
-              <input    type="checkbox" class="bufferToggle"       id="bufferToggle1"         onclick="bufferToggle( '1', this )" > <span id="buffer1Size" ></span>
+              <input    type="text"     class="bufferTitle"        id="buffer1Title" value="" onchange="saveContext( 'buffer1Title', this.value  )"> 
+              <input    type="checkbox" class="bufferToggle"       id="buffer1Toggle"         onclick="bufferToggle( '1', this )" > <span id="buffer1Size" ></span>
               <textarea                 class="textBox resizable"  id="buffer1"               onchange="saveContext( 'buffer1',      this.value )" ></textarea>
             </div>
             
           </li>
           <li>
             <div class="buffer" id="b2">
-              <input    type="text"     class="bufferTitle"        id="bufferTitle2" value="" onchange="saveContext( 'bufferTitle2', this.value )">  
-              <input    type="checkbox" class="bufferToggle"       id="bufferToggle2"         onclick="bufferToggle( '2', this )" > <span id="buffer2Size" ></span>
+              <input    type="text"     class="bufferTitle"        id="buffer2Title" value="" onchange="saveContext( 'buffer2Title', this.value )">  
+              <input    type="checkbox" class="bufferToggle"       id="buffer2Toggle"         onclick="bufferToggle( '2', this )" > <span id="buffer2Size" ></span>
               <textarea                 class="textBox resizable"  id="buffer2"               onchange="saveContext( 'buffer2',      this.value )"></textarea><br />
             </div>
       
           </li>
           <li>
             <div class="buffer" id="b3">
-              <input    type="text"     class="bufferTitle"        id="bufferTitle3" value="" onchange="saveContext( 'bufferTitle3', this.value )"> 
-              <input    type="checkbox" class="bufferToggle"       id="bufferToggle3"         onclick="bufferToggle( '3', this )" >  <span id="buffer3Size" ></span>
+              <input    type="text"     class="bufferTitle"        id="buffer3Title" value="" onchange="saveContext( 'buffer3Title', this.value )"> 
+              <input    type="checkbox" class="bufferToggle"       id="buffer3Toggle"         onclick="bufferToggle( '3', this )" >  <span id="buffer3Size" ></span>
               <textarea                 class="textBox resizable"  id="buffer3"               onchange="saveContext( 'buffer3',      this.value )"></textarea><br />
             </div>
       
           </li>
           <li>
             <div class="buffer" id="b4">
-              <input    type="text" class="bufferTitle"            id="bufferTitle4" value="" onchange="saveContext( 'bufferTitle4', this.value  )"> 
-              <input    type="checkbox" class="bufferToggle"       id="bufferToggle4"         onclick="bufferToggle( '4', this )" > <span id="buffer4Size" ></span>
+              <input    type="text" class="bufferTitle"            id="buffer4Title" value="" onchange="saveContext( 'buffer4Title', this.value  )"> 
+              <input    type="checkbox" class="bufferToggle"       id="buffer4Toggle"         onclick="bufferToggle( '4', this )" > <span id="buffer4Size" ></span>
               <textarea             class="textBox resizable"      id="buffer4"               onchange="saveContext( 'buffer4',      this.value )" ></textarea>
             </div>
       
           </li>
           <li>
             <div class="buffer" id="b5">
-              <input    type="text" class="bufferTitle"            id="bufferTitle5" value="" onchange="saveContext( 'bufferTitle5', this.value )">  
-              <input    type="checkbox" class="bufferToggle"       id="bufferToggle5"         onclick="bufferToggle( '5', this )" > <span id="buffer5Size" ></span>
+              <input    type="text" class="bufferTitle"            id="buffer5Title" value="" onchange="saveContext( 'buffer5Title', this.value )">  
+              <input    type="checkbox" class="bufferToggle"       id="buffer5Toggle"         onclick="bufferToggle( '5', this )" > <span id="buffer5Size" ></span>
               <textarea             class="textBox resizable"      id="buffer5"               onchange="saveContext( 'buffer5',      this.value )"></textarea><br />
             </div>
       
           </li>
           <li>  
             <div class="buffer" id="b6">
-              <input    type="text" class="bufferTitle"            id="bufferTitle6" value="" onchange="saveContext( 'bufferTitle6', this.value )">  
-              <input    type="checkbox" class="bufferToggle"       id="bufferToggle6"         onclick="bufferToggle( '6', this )" > <span id="buffer6Size" ></span>
+              <input    type="text" class="bufferTitle"            id="buffer6Title" value="" onchange="saveContext( 'buffer6Title', this.value )">  
+              <input    type="checkbox" class="bufferToggle"       id="buffer6Toggle"         onclick="bufferToggle( '6', this )" > <span id="buffer6Size" ></span>
               <textarea             class="textBox resizable"      id="buffer6"               onchange="saveContext( 'buffer6',      this.value )"></textarea><br />
             </div>
             
           </li>
           <li> 
             <div class="buffer" id="b7">
-              <input    type="text" class="bufferTitle"            id="bufferTitle7" value="" onchange="saveContext( 'bufferTitle6', this.value )">  
-              <input    type="checkbox" class="bufferToggle"       id="bufferToggle7"         onclick="bufferToggle( '7', this )" > <span id="buffer7Size" ></span>
+              <input    type="text" class="bufferTitle"            id="buffer7Title" value="" onchange="saveContext( 'buffer7Title', this.value )">  
+              <input    type="checkbox" class="bufferToggle"       id="buffer7Toggle"         onclick="bufferToggle( '7', this )" > <span id="buffer7Size" ></span>
               <textarea             class="textBox resizable"      id="buffer7"               onchange="saveContext( 'buffer7',      this.value )"></textarea><br />
             </div>
             
           </li>
           <li>
             <div class="buffer" id="b8">
-              <input    type="text" class="bufferTitle"            id="bufferTitle8" value="" onchange="saveContext( 'bufferTitle8', this.value )">  
-              <input    type="checkbox" class="bufferToggle"       id="bufferToggle8"         onclick="bufferToggle( '8', this )" > <span id="buffer8Size" ></span>
+              <input    type="text" class="bufferTitle"            id="buffer8Title" value="" onchange="saveContext( 'buffer8Title', this.value )">  
+              <input    type="checkbox" class="bufferToggle"       id="buffer8Toggle"         onclick="bufferToggle( '8', this )" > <span id="buffer8Size" ></span>
               <textarea             class="textBox resizable"      id="buffer8"               onchange="saveContext( 'buffer8',      this.value )"></textarea><br />
             </div>
             
           </li>
           <li>
             <div class="buffer" id="b9">
-              <input    type="text" class="bufferTitle"            id="bufferTitle9" value="" onchange="saveContext( 'bufferTitle9', this.value )">  
-              <input    type="checkbox" class="bufferToggle"       id="bufferToggle9"         onclick="bufferToggle( '9', this )" > <span id="buffer9Size" ></span>
+              <input    type="text" class="bufferTitle"            id="buffer9Title" value="" onchange="saveContext( 'buffer9Title', this.value )">  
+              <input    type="checkbox" class="bufferToggle"       id="buffer9Toggle"         onclick="bufferToggle( '9', this )" > <span id="buffer9Size" ></span>
               <textarea             class="textBox resizable"      id="buffer9"               onchange="saveContext( 'buffer9',      this.value )"></textarea><br />
             </div> 
           </li>
