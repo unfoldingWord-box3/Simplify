@@ -1,5 +1,5 @@
 
-  const defaultContext = { // defaults for all global variables replaced by local storage as changed
+  const defaultContext = {                               // defaults for all global variables replaced by local storage as changed
     contextAry:             [],
     contextIdx:             0,
     previousPrompts:        "",  previousPromptsHeight:        "2em",
@@ -46,7 +46,7 @@
   let context = {};
   
 // The following info is found at: openai.com/api/pricing
-  let defaultModels = [ // known models their compatabilities and prices
+  let defaultModels = [                                  // known models their compatabilities and prices
     { model: "ada"                         , target: "",      input: "$0.00010   ", output: "$0.00010  ", units: "1k", asOf: "7/22" }, 
     { model: "babbage"                     , target: "",      input: "$0.01      ", output: "$0.01     ", units: "1k", asOf: "" }, 
     { model: "babbage-002"                 , target: "",      input: "$0.00040   ", output: "$0.00040  ", units: "1k", asOf: "7/22" },
@@ -55,11 +55,11 @@
     { model: "davinci-002"                 , target: "",      input: "$0.0020    ", output: "$0.0020   ", units: "1k", asOf: "7/22" },
     { model: "gpt-3.5-turbo"               , target: "chat",  input: "$0.0030    ", output: "$0.0030   ", units: "1k", asOf: "" }, 
     { model: "gpt-3.5-turbo-0125"          , target: "chat",  input: "$0.00050   ", output: "$0.00150  ", units: "1k", asOf: "7/22" },
-    { model: "gpt-3.5-turbo-0301"          , target: "chat",  input: "$0.00150   ", output: "$0.0020   ", units: "1k", asOf: "" },
-    { model: "gpt-3.5-turbo-0613"          , target: "chat",  input: "$0.00150   ", output: "$0.0020   ", units: "1k", asOf: "" }, 
+    { model: "gpt-3.5-turbo-0301"          , target: "dep",   input: "$0.00150   ", output: "$0.0020   ", units: "1k", asOf: "" },
+    { model: "gpt-3.5-turbo-0613"          , target: "dep",   input: "$0.00150   ", output: "$0.0020   ", units: "1k", asOf: "" }, 
     { model: "gpt-3.5-turbo-1106"          , target: "chat",  input: "$0.0010    ", output: "$0.0020   ", units: "1k", asOf: "7/22" },
     { model: "gpt-3.5-turbo-16k"           , target: "chat",  input: "$0.01      ", output: "$0.01     ", units: "1k", asOf: "" },
-    { model: "gpt-3.5-turbo-16k-0613"      , target: "chat",  input: "$0.0030    ", output: "$0.0040   ", units: "1k", asOf: "7/22" }, 
+    { model: "gpt-3.5-turbo-16k-0613"      , target: "dep",   input: "$0.0030    ", output: "$0.0040   ", units: "1k", asOf: "7/22" }, 
     { model: "gpt-3.5-turbo-instruct"      , target: "chat",  input: "$0.00050   ", output: "$0.0020   ", units: "1k", asOf: "7/22" },
     { model: "gpt-3.5-turbo-instruct-0914" , target: "chat",  input: "$0.01      ", output: "$0.01     ", units: "1k", asOf: "" },
     { model: "gpt-4"                       , target: "chat",  input: "$0.030     ", output: "$0.060    ", units: "1k", asOf: "7/22" }, 
@@ -125,7 +125,7 @@
     var rptCost = "";
     var thisModel, atr, tokens, price, costParm, cost;
 
-    if( rep ) {          // include repeating context in cost
+    if( rep ) {                                          // include repeating context in cost
       rptCost = repeatingContextObj.value;
     }
 
@@ -145,7 +145,7 @@
       cost = parseFloat( costParm.input.replace( "$", "" ) );
 
     
-      if( context.contextAry.length > 1 ) { // multiply by number of prompts
+      if( context.contextAry.length > 1 ) {              // multiply by number of prompts
         tokens = tokens *= context.contextAry.length;
       } 
     
@@ -158,7 +158,7 @@
 
   function bufferToggle( idx, val ) {                /** Toggle textarea visibility */
     $( "#buffer" + idx ).toggle();
-    saveContext( "buffer"+idx+"Toggle", val.checked );
+    saveContext( "buffer" + idx + "Toggle", val.checked );
   }
   
   function cancel() {                                /** Stop processing at end of current chunk and prepare to restart */                           
@@ -249,7 +249,7 @@
     if( contextString ) {
       storedContext = JSON.parse( contextString ); 
 
-      for( var attr in defaultContext ) {  // copy from saved context to current context. hint saved may not have all current values
+      for( var attr in defaultContext ) {                // copy from saved context to current context. hint saved may not have all current values
         if( storedContext.hasOwnProperty( attr ) ) {
           context[ attr ] = storedContext[ attr ];
         }
@@ -260,26 +260,22 @@
           context.models[ mod ] = storedContext.models[ mod ];
         }
       }
-    } else {
-      localStorage.setItem(  "openAiContext", JSON.stringify( context ) );   // set to default
+    } else {                                             // set to default
+      localStorage.setItem(  "openAiContext", JSON.stringify( context ) ); 
     }
 
     for( bIdx = 0; bIdx < 10; bIdx += 1 ) {
       $( "#b" + bIdx ).show();
     }
 
-    for( var attr in context ) {  // Copy from current context to form  
+    for( var attr in context ) {                         // Copy from current context to form  
       if( context.hasOwnProperty( attr ) && ( attr.indexOf( "Height" ) < 0 ) ) {      
         switch( attr ) {
           case "chunkSize":
             document.getElementById( "chunkSizeValue" ).innerText = context.chunkSize;
             document.getElementById( attr ).value = context[ attr ];
             break;
-          
-          case "chunkSeparator":
-            $( "#" + attr ).val( context.chunkSeparator ) /*.change()*/ ;
-            break;
-            
+                      
           case "currentContext":
             // make context pipeline
               context.contextAry = context.repeatingContext.replace( /\n/g, "" ).split( "---" );
@@ -288,20 +284,26 @@
             // get first one and show it if in pipeline
               context.currentContext = context.contextAry[ 0 ];
               document.getElementById( attr ).value = context.currentContext;
+              $( "#currentContext" ).show();
+            break;
+            
+          case "isConfiged":  
+            $( "#" + attr ).prop( "checked", context[ attr ] );
+            
+            if( context.isConfiged ) {
+              $( "#conf" ).show();
+            } else {
+              $( "#conf" ).hide();
+            }
             break;
             
           case "isShowSizes": 
-          case "isConfiged":  
           case "isBuffered":            
           case "isMarkChunk":  
-            $( "#"+attr ).checked = context[ attr ];
+            $( "#"+attr ).prop( "checked", context[ attr ] );
+            showSizes();
             break;
           
-/*        case "isShowSizes":  
-            document.getElementById( "isShowSizes" ).checked = context.isShowSizes;
-            break;
-*/          
-
           case "dragables":
             for( itm in context.dragables ) {
               for( atr in context.dragables[ itm ] ) {
@@ -324,7 +326,9 @@
             break;
 
           case "model":
-            $( "#model" ).val( context.model );
+          case "temperature":
+          case "chunkSeparator":
+            $( "#"+attr ).val( context[ attr ] );
             break;
         
           case "buffer0Title":
@@ -343,8 +347,10 @@
               ttl.style.height = context[ attr + "Height" ];  
             }
             break;
-*/            
-          case "previousPrompts": // These have height attributes that may change
+*/        
+    
+          // These have height attributes that may change
+          case "previousPrompts": 
           case "repeatingContext":
           case "sourceText":
           case "currentChunk":
@@ -375,7 +381,6 @@
           case "buffer7Toggle":
           case "buffer8Toggle":
           case "buffer9Toggle":
-            //var idx = attr.sice( -1 );
             $( "#" + attr ).prop( "checked", context[ attr ] ).change();  
             $( "#"+attr.slice( 0, 7 ) ).css( "display", context[ attr ] ? "inline" : "none" );   
             break;
@@ -410,7 +415,7 @@
       obj.data.map( item => validModel( item.id ) );   
       validModels.sort();
       document.getElementById( "model" ).innerHTML = validModels.join( "\n" );
-      $( "#model" ).val( context.model ); // select default model
+      $( "#model" ).val( context.model );                // select default model
       initModels();
       estimateCost();
       }
@@ -423,10 +428,15 @@
   
   function init() {                                  /** Configure app at startup */
     markState( "Initializing" );
-    getContext();       // override all defaults with saved data
-    getModels();        // set default model
+    getContext();                                        // override all defaults with saved data
+    getModels();                                         // set default model
     markState( "Idling" );
     startStop( "play next", "pause redo cancel" );
+    
+    $( 'textarea' ).on( "mouseup", function() {          // catch each textarea resize
+      scanSizes();
+    } );
+    
 //    setCopies();
   }
   
@@ -446,7 +456,7 @@
     var mdlAry = [];
     var mdlIdx = 0;
 
-    for( itm in context.models ) { // build table of default models
+    for( itm in context.models ) {                       // build table of default models
       mdlAry.push( 
         `<tr>
            <td>                                                               ${context.models[mdlIdx].model} </td> 
@@ -478,10 +488,7 @@
     resetChunks();
   }
 
-  async function loadFile( files ) {                 /** Capture list of files, download them and list in textarea */
-//    var tgt = document.getElementById( 'textFile' );
-//    var fn = document.getElementById( 'fileName' );
-    
+  async function loadFile( files ) {                 /** Capture list of files, download them and list in textarea */    
     for( fleIdx = 0; fleIdx < files.length; fleIdx += 1 ) {
       var txt = await files[ fleIdx ].text() ;
       $( "#textFile" ).append( files[ fleIdx ].name + "\n" );
@@ -534,7 +541,7 @@
 
     let pos = context.sourceText.split( " ", context.chunkSize ).join( " " ).length;
 
-    if( pos < 0 ) {  // if no delimiter then send whole chunk
+    if( pos < 0 ) {                                      // if no delimiter then send whole chunk
       context.currentChunk = context.sourceText;
     } else {
       context.currentChunk = context.sourceText.substring( 0, pos );        
@@ -542,7 +549,7 @@
    
     let separatorPosition = context.currentChunk.lastIndexOf( context.chunkSeparator );
 
-    if( separatorPosition >= 0 ) { // backup to separator
+    if( separatorPosition >= 0 ) {                       // backup to separator
       context.currentChunk.substring( 0, separatorPosition );
     }
     
@@ -558,7 +565,6 @@
   function pauseAll() {                              /** Interrupt simplification file list processing */
     markStateAll( "Pausing" );
     startStopAll( "play cancel next", "pause" );
-//    setError( "" );
   }
   
   function persist() {                               /** Save context in local storage */
@@ -599,7 +605,6 @@
               break;
             
             case "Completing":
-//              isLooping = false;
               break;
               
             case "Stepping":
@@ -608,7 +613,7 @@
               startStopAll( "play next cancel", "pause" );
               break;
               
-            case "Pausing": // just hang out
+            case "Pausing":                              // just hang out
               break;
               
             case "Canceling":
@@ -623,9 +628,7 @@
       
       document.getElementById( "filesComplete" ).innerText = fileCount;
       setProgress( "fileProgress", parseInt( ( ( fileCount / fileNames.length ) ) * 100 ) );
-      toastWhere( '#toasterAll', `Completed file: ${fileNames[fileCount - 1]}`, 'Progress' )
-//    document.getElementById( "fileNumber" ).innerText = fileIdx + 1;
-
+      toastWhere( '#toasterAll', `Completed file: ${fileNames[fileCount - 1]}`, 'Progress' );
     }
 
     switch( machineStateAll ) {
@@ -698,6 +701,19 @@
     toast( `Save file as: ${path}`, "Progress" );    
   }
   
+  function isCheckTrue( attr ) {                     /** is checked true or false */
+    var tmp =  document.getElementById( attr ).checked;     
+    var val = tmp;
+    
+    if( tmp == "on" ) {
+      val = true;
+    } else if( tmp == "off" ) {
+      val = false;
+    }  
+    
+    return val;
+}
+  
   function saveContext( attr, val ) {                /** Save all persistent variables in localstorage */    
     markState( "Saving" );
     toast( `SaveContext: ${attr}`, "Progress" );
@@ -712,6 +728,8 @@
           context.chunkSeparator = $('#chunkSeparator').find(":selected").val(); // select drop down
           break;
           
+        case "temperature":
+        case "model":
         case "diff": 
         case "log": 
         case "batch": 
@@ -719,21 +737,23 @@
         case "help":
           break;
           
-/*        case "isShowSizes": 
         case "isConfiged":  
-        case "isBuffered":            
-        case "isMarkChunk":  
-          context[ attr ] = document.getElementById( attr ).checked;
-          break;
-*/        
-        case "temperature":
-//          context.temperature =  $( '#temperature' ).val();  
+          val = isCheckTrue( attr );
+          
+          if( val ) {
+            $( "#conf" ).show();
+          } else {
+            $( "#conf" ).hide();
+          }              
           break;
           
-        case "model":
-//          context.model = $( '#model' ).val();                                   // select drop down
+        case "isShowSizes": 
+          showSizes();
+        case "isBuffered":
+        case "isMarkChunk":         
+          val = isCheckTrue( attr );        
           break;
-
+         
         case "repeatingContext":
           context.repeatingContext = repeatingContextObj.value       // textarea  
           context.contextAry = context.repeatingContext.replace( /\n/g, "" ).split( "---" );
@@ -761,26 +781,30 @@
       
       estimateCost();
       context[ attr ] = val;
-      scanSizes();    
+      checkSizes();    
       showSizes();      
       markState( "Saved" );
+      persist();
     }
   }
-        
-  function scanSizes() {                             /** Look for resized textareas and save them in context */    
+     
+  function checkSizes() {                            /** Capture size of each buffer */
     $( '.resizable' ).each( function( id ) {
       var tElem = this[ 'id' ];
       var h = document.getElementById( tElem );
       context[ tElem + "Height" ] = h.style.height;
-      persist();
     } );
-
+  }
+  
+  function scanSizes() {                             /** Look for resized textareas and save them in context */    
+    checkSizes();
+    persist();
    }
   
-  async function scrapeModel() {
+  async function scrapeModel() {                     /** TBD get user's models and their prices */
     await fetch( 'https://platform.openai.com/docs/models', { method: "GET",  mode: "no-cors" } )
     .then( response => response.json() ) 
-    .then( data => {       // got a response.. but wait there may be more
+    .then( data => {                                     // got a response.. but wait there may be more
       var res = data.error;
 
       if( res ) {
@@ -793,12 +817,12 @@
     });
   }
   
-  function setCopies() {
+  function setCopies() {                             /** Copy selected buffers to diff page header */
     setCopy( "orgBuffer" );
     setCopy( "changedBuffer" );
   }
   
-  function setCopy( id ) {
+  function setCopy( id ) {                           /** copy selected buffer name to diff page header */
     var val = $( `#${id}` ).find( 'option:selected' ).text();
     $( `#${id}Selection` ).html( val );
   }
@@ -809,7 +833,7 @@
     if( txt.length > 0 ) {
       toast( txt, "Fault" );
     
-      setTimeout( function(){ // After 5 seconds, remove the show class from DIV
+      setTimeout( function(){                            // After 5 seconds, remove the show class from DIV
         document.getElementById( 'chatError' ).innerText = ""; 
       }, 10000 );
     }
@@ -823,7 +847,7 @@
      }
   }
   
-  function setProgress( bar, pct ) {                 /**  */
+  function setProgress( bar, pct ) {                 /** Move progress bar for chunks or files */
     var cur = document.getElementById( bar );
     cur.value = pct;
   }
@@ -848,7 +872,7 @@
       var bufName = "#" + bufferNames[ bufId ];
       var bufTxt =   "";
       
-      if( context.isShowSizes && context.isShowSizes.indexOf( "on" ) >= 0 ) {
+      if( context.isShowSizes ) {      // && context.isShowSizes.indexOf( "on" ) >= 0 ) {
         var bufLen =  $( bufName ).val().length;
         
         if( bufLen > 0 ) {
@@ -868,7 +892,7 @@
         case "Initing":
           break;
         
-        case "Saved":          // happens if you toggle buffers while processing
+        case "Saved":                                    // happens if you toggle buffers while processing
           markState( previousState );
           break;
           
@@ -989,7 +1013,7 @@
        } )
     } )
     .then( response => response.json() ) 
-    .then( data => {       // got a response.. but wait there may be more
+    .then( data => {                                     // got a response.. but wait there may be more
       var res = data.error;
 
       if( res ) {
@@ -1044,17 +1068,17 @@
   
   function toggle( divId ) {                         /** Toggle div visibility */
     $( divId ).toggle();
-    toHigh( divId );
+    toHigh( divId );                                     // Raise to top of window stack
   }
   
-  function toHigher( e ) {                           /** While rasing to top, persist current size and location  */
+  function toHigher( e ) {                           /** While raising to top, persist current size and location  */
     var eObj = e.currentTarget;
     var id   = eObj.id;
     toHigh( "#" + id );
     
     var itm = context.dragables[ id ];
     
-    itm.left    = eObj.offsetLeft;    // remember position and size
+    itm.left    = eObj.offsetLeft;                       // remember position and size
     itm.top     = eObj.offsetTop; 
     itm.width   = eObj.offsetWidth;
     itm.height  = eObj.offsetHeight;
