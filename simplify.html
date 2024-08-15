@@ -33,33 +33,35 @@
       </table>
     </header>
     
-    <div id="config" > 
+    <div id="config" >  <!-- onclick='toggle( "#conf" )' ch ecked -->
       <span id="config-title"> Getting Started: Configuration </span> 
       <span data-text='Toggle config info' class='tooltip'> 
-        <input id='isConfiged' type='checkbox' onchange="saveContext('isConfiged', this.value )" onclick='toggle("#conf")' checked > </span> <br>
-      <div id='conf'>
-        1.  
-          Set up an OpenAI account (<a href='https://openai.com' target='BLANK' >OpenAi</a>) then enter key here. 
-          <button onclick="setKey()">    Set API Key </button> <br>
+        <input id='isConfiged' type='checkbox' onchange="saveContext( 'isConfiged', this.value )" > 
+      </span> <br>
+      <ol id='conf'>
+        <li> Set up an OpenAI account (<a href='https://openai.com' target='BLANK' >OpenAi</a>) then enter key here. 
+             <button onclick="setKey()">    Set API Key </button> </li>
 
-        2. Next, pick a Model
+        <li> Next, pick a Model
           <select id="model" onchange="saveContext( 'model', this.value )" >
-          </select> <br>
-        3. Periodically, examine cost of model against current "Source Text":<br> 
+          </select> </li>
+          
+        <li> Periodically, examine cost of model against current "Source Text":<br> 
           <table class='cost indent'>
             <tr c/lass='cost' > <td>       </td>  <th>Tokens            </th>  <th>Cost($)          </th> </tr>
             <tr c/lass='cost' > <th> Input </th>  <td id='inputTokens'> </td>  <td id='inputCost'> </td> </tr>
             <tr c/lass='cost' > <th> Output</th>  <td id='outputTokens'></td>  <td id='outputCost'></td> </tr>
             <tr c/lass='cost' > <th> Total </th>  <td>                  </td>  <td id='totalCost'> </td> </tr>
           </table> 
+        </li> 
+        
+        <li> <span>Set Temperature to between 0 and 2.</span> 
+          <input id="temperature" type="number" value="0.2" min="0" max="1"  onchange="saveContext( 'temperature', this.value )">  </li>
 
-        4. <span>Set Temperature to between 0 and 2.</span> 
-          <input id="temperature" type="number" value="0.2" min="0" max="1"  onchange="saveContext( 'temperature', this.value )"> <br>
-
-        5. Set chunk size  to between 250 and 10,000 <input type="range" id="chunkSize" min="250" max="10000" step="250" value="500"
-               onchange="saveContext( 'chunkSize', this.value )" > <span id="chunkSizeValue" > 500 </span> <br> 
+        <li> Set chunk size  to between 250 and 10,000 <input type="range" id="chunkSize" min="250" max="10000" step="250" value="500"
+               onchange="saveContext( 'chunkSize', this.value )" > <span id="chunkSizeValue" > 500 </span>  </li>
        
-        6. Pick  Chunk Separator 
+        <li> Pick  Chunk Separator 
           <select id="chunkSeparator" onchange="saveContext( 'chunkSeparator', this.value )" >
             <option value="\n"            > New line    </option>
             <option value="\n\r" selected > 2 New lines </option>
@@ -69,15 +71,19 @@
             <option value="## "           > ##          </option> 
             <option value="### "          > ###         </option>   
             <option value="--- "          > Page        </option>        
-          </select> <br>
-
-        7. Enable marking of output chunks
-           <input type="checkbox" id="isMarkChunk" onchange="saveContext('isMarkChunk', this.value )" > <br>
-        8. Show sizes of each buffer <input type="checkbox" id="isShowSizes" onchange="saveContext('isShowSizes', this.value )" >  <br>
-        9. If all else fails: Click 
-          <i class='fas fa-info' onclick="toggle( '#help'     )" > </i>
-          For help or <button onclick='removeLocalStorage()' >Reset App</button>
-      </div>
+          </select> 
+        </li>
+        
+        <li> Enable marking of output chunks
+           <input type="checkbox" id="isMarkChunk" onchange="saveContext('isMarkChunk', this.value )" > </li>
+           
+        <li> Show sizes of each buffer 
+           <input type="checkbox" id="isShowSizes" onchange="saveContext('isShowSizes', this.value )" >  </li>
+           
+        <li> If all else fails: Click the Info
+          <i class='fas fa-info' onclick="toggle( '#help' )" > </i>
+          for help or <button onclick='removeLocalStorage()' >Reset App</button> </li>
+      </ol>
     </div>
     
     <div id="mainPage" >
@@ -469,8 +475,7 @@
              
         <p>To use this application: </p>
           <ul>
-            <li> 
-              <b> Configure the application </b> 
+            <li> <b> Configure the application </b> 
               <ol>
                 <li> Activate the application by getting an API Key. This involves setting up an OpenAI API Account. 
                      There are two types of accounts. This app uses the API to access chatGpt.
@@ -480,7 +485,7 @@
                         <li> Navigate to `openAi.com` </li> 
                         <li> Click Products </li> 
                         <li> Click API Login </li> 
-                        <li> Click API </li> 
+                        <li> Follow instructions to create an account </li> 
                       </ol>
                     </li> 
                     <li> Get API key (not free)    
@@ -489,8 +494,12 @@
                         <li> Click Products </li> 
                         <li> Click API Login </li> 
                         <li> Click API </li> 
-                        <li> Click API Keys </li> 
-                        <li> Click Generate new secret key </li> 
+                        <li> Click Dashboard  </li>  
+                        <li> Click Lock <i class='fas fa-lock' > </i> icon </li>  
+                        <li> Click Create a new Secret Key </li>                         
+                        <li> Copy key to someplace safe </li> 
+                        <li> Click Set API key </li> 
+                        <li> Paste key in dialog </li> 
                       </ol> 
                     </li> 
                     <li> Click "Set API Key" in Simplify App. </li> 
@@ -500,16 +509,37 @@
                   </ol>
                 </li>
                 <li> Select an OpenAi model to use. 
-                     There are various models for different purposes. 
-                     The default of gpt-3.5-turbo has been tested with this app. 
-                     The list is constructed from what is available on your plan.
+                  <ul>
+                    <li> There are various models for different purposes. </li> 
+                    <li> The default of gpt-3.5-turbo has been tested with this app. </li> 
+                    <li> The list is constructed from what is available on your plan. </li> 
  
-                     We generally recommend that developers use either GPT-4o or GPT-3.5 Turbo, 
-                     depending on the complexity of your tasks. 
-                     GPT-4o generally performs better on a wide range of tasks, 
-                     while GPT-3.5 Turbo is fast and inexpensive for simpler tasks. 
- 
-                     Models known to not be currently suitable are suppressed in the dropdown list. </li> 
+                    <li> We generally recommend that developers use either GPT-4o or GPT-3.5 Turbo, 
+                         depending on the complexity of your tasks. 
+                         GPT-4o generally performs better on a wide range of tasks, 
+                         while GPT-3.5 Turbo is fast and inexpensive for simpler tasks.  </li> 
+                    <li> Models known to not be currently suitable are suppressed in the dropdown list. </li> 
+                    <li> If you do not see your favorite model (or any) then you have to enable models in your openAi account.
+                      <ul>
+                        <li> Login to API Account </li>
+                        <li> Click Settings gear <i class='fas fa-cog' > </i> icon </li>
+                        <li> Click Project > Limits </li>
+                        <li> Click Edit </li>
+                        <li> Click Allow </li>
+                        <li> Select models of interest. Here are some to consider:  
+                          <ul>
+                            <li> gpt-3.5-turbo </li>
+                            <li> gpt-4 </li>
+                            <li> gpt-4o </li>
+                            <li> gpt-4o-mini-2024-07-18 </li>
+                          </ul>
+                        </li>  
+                        <li> Click Save </li>
+                        <li> Click Refresh <i class='fa fa-redo' > </i> icon on the browser. </li>
+                      </ul>
+                    </li>
+                  </ul>
+                </li>                   
                 <li> Periodically, examine cost of input text. this changes per model and size of text to process. </li>
                 <li> Select a temperature for responses. 
                      The value range is 0-2. 
@@ -528,6 +558,7 @@
                      Before resetting, save any buffers or configuration settings in a scratch file so that you can easily restore them. </li>
               </ol>
             </li>
+            
             <li> <b> Prepare Text  </b></li>
             <ol>
               <li> Open a document to be processed.</li>
